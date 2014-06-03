@@ -512,3 +512,238 @@ fileid = open('has_never_bought_company_category_brand.txt', 'w')
 for shopper in has_never_bought_company_category_brand:
     fileid.write (shopper + ' ' + str(has_never_bought_company_category_brand[shopper]) + '\n')
 fileid.close()
+
+has_bought_company_file = open('has_bought_company.txt', 'r')
+has_bought_company_a_file = open('has_bought_company_a.txt', 'r')
+has_bought_company_q_file = open('has_bought_company_q.txt', 'r')
+has_bought_company_30_file = open('has_bought_company_30.txt', 'r')
+has_bought_company_60_file = open('has_bought_company_60.txt', 'r')
+has_bought_company_180_file = open('has_bought_company_180.txt', 'r')
+has_bought_category_file = open('has_bought_category.txt', 'r')
+has_bought_category_a_file = open('has_bought_category_a.txt', 'r')
+has_bought_category_q_file = open('has_bought_category_q.txt', 'r')
+has_bought_category_30_file = open('has_bought_category_30.txt', 'r')
+has_bought_category_60_file = open('has_bought_category_60.txt', 'r')
+has_bought_category_180_file = open('has_bought_category_180.txt', 'r')
+has_bought_brand_file = open('has_bought_company.txt', 'r')
+has_bought_brand_a_file = open('has_bought_company_a.txt', 'r')
+has_bought_brand_q_file = open('has_bought_company_q.txt', 'r')
+has_bought_brand_30_file = open('has_bought_company_30.txt', 'r')
+has_bought_brand_60_file = open('has_bought_company_60.txt', 'r')
+has_bought_brand_180_file = open('has_bought_company_180.txt', 'r')
+has_never_bought_company_file = open('has_never_bought_company.txt', 'r')
+has_never_bought_category_file = open('has_never_bought_category.txt', 'r')
+has_never_bought_brand_file = open('has_never_bought_brand.txt', 'r')
+has_bought_company_brand_file = open('has_bought_company_brand.txt', 'r')
+has_bought_company_category_file = open('has_bought_company_category.txt', 'r')
+has_bought_category_brand_file = open('has_bought_category_brand.txt', 'r')
+has_bought_company_category_brand_file = open('has_bought_company_category_brand.txt', 'r')
+has_never_bought_company_brand_file = open('has_bought_company_brand.txt', 'r')
+has_never_bought_company_category_file = open('has_bought_company_category.txt', 'r')
+has_never_bought_category_brand_file = open('has_bought_category_brand.txt', 'r')
+has_never_bought_company_category_brand_file = open('has_bought_company_category_brand.txt', 'r')
+total_shopper_spend_file = open('total_shopper_spend.txt', 'r')
+
+has_bought_company = {}
+has_bought_company_a = {}
+has_bought_company_q = {}
+has_bought_company_30 = {}
+has_bought_company_60 = {}
+has_bought_company_180 = {}
+has_bought_category = {}
+has_bought_category_a = {}
+has_bought_category_q = {}
+has_bought_category_30 = {}
+has_bought_category_60 = {}
+has_bought_category_180 = {}
+has_bought_brand = {}
+has_bought_brand_a = {}
+has_bought_brand_q = {}
+has_bought_brand_30 = {}
+has_bought_brand_60 = {}
+has_bought_brand_180 = {}
+has_never_bought_company = {}
+has_never_bought_category = {}
+has_never_bought_brand = {}
+has_bought_company_brand = {}
+has_bought_company_category = {}
+has_bought_category_brand = {}
+has_bought_company_category_brand = {}
+has_never_bought_company_brand = {}
+has_never_bought_company_category = {}
+has_never_bought_category_brand = {}
+has_never_bought_company_category_brand = {}
+total_shopper_spend = {}
+
+
+for line in has_bought_company_file:
+    row = line.split()
+    has_bought_company[row[0]] = row[1]
+for line in has_bought_company_a_file:
+    row = line.split()
+    has_bought_company_a[row[0]] = row[1]
+for line in has_bought_company_q_file:
+    row = line.split()
+    has_bought_company_q[row[0]] = row[1]
+for line in has_bought_company_30_file:
+    row = line.split()
+    has_bought_company_30[row[0]] = row[1]
+for line in has_bought_company_60_file:
+    row = line.split()
+    has_bought_company_60[row[0]] = row[1]
+for line in has_bought_company_180_file:
+    row = line.split()
+    has_bought_company_180[row[0]] = row[1]
+for line in has_bought_category_file:
+    row = line.split()
+    has_bought_category[row[0]] = row[1]
+for line in has_bought_category_a_file:
+    row = line.split()
+    has_bought_category_a[row[0]] = row[1]
+for line in has_bought_category_q_file:
+    row = line.split()
+    has_bought_category_q[row[0]] = row[1]
+for line in has_bought_category_30_file:
+    row = line.split()
+    has_bought_category_30[row[0]] = row[1]
+for line in has_bought_category_60_file:
+    row = line.split()
+    has_bought_category_60[row[0]] = row[1]
+for line in has_bought_category_180_file:
+    row = line.split()
+    has_bought_category_180[row[0]] = row[1]
+for line in has_bought_brand_file:
+    row = line.split()
+    has_bought_brand[row[0]] = row[1]
+for line in has_bought_brand_a_file:
+    row = line.split()
+    has_bought_brand_a[row[0]] = row[1]
+for line in has_bought_brand_q_file:
+    row = line.split()
+    has_bought_brand_q[row[0]] = row[1]
+for line in has_bought_brand_30_file:
+    row = line.split()
+    has_bought_brand_30[row[0]] = row[1]
+for line in has_bought_brand_60_file:
+    row = line.split()
+    has_bought_brand_60[row[0]] = row[1]
+for line in has_bought_brand_180_file:
+    row = line.split()
+    has_bought_brand_180[row[0]] = row[1]
+for line in has_never_bought_company_file:
+    row = line.split()
+    has_never_bought_company[row[0]] = row[1]
+for line in has_never_bought_category_file:
+    row = line.split()
+    has_never_bought_category[row[0]] = row[1]
+for line in has_never_bought_brand_file:
+    row = line.split()
+    has_never_bought_brand[row[0]] = row[1]
+for line in has_bought_company_brand_file:
+    row = line.split()
+    has_bought_company_brand[row[0]] = row[1]
+for line in has_bought_company_category_file:
+    row = line.split()
+    has_bought_company_category[row[0]] = row[1]
+for line in has_bought_category_brand_file:
+    row = line.split()
+    has_bought_category_brand[row[0]] = row[1]
+for line in has_bought_company_category_brand_file:
+    row = line.split()
+    has_bought_company_category_brand[row[0]] = row[1]
+for line in has_never_bought_company_brand_file:
+    row = line.split()
+    has_never_bought_company_brand[row[0]] = row[1]
+for line in has_never_bought_company_category_file:
+    row = line.split()
+    has_never_bought_company_category[row[0]] = row[1]
+for line in has_never_bought_category_brand_file:
+    row = line.split()
+    has_never_bought_category_brand[row[0]] = row[1]
+for line in has_never_bought_company_category_brand_file:
+    row = line.split()
+    has_never_bought_company_category_brand[row[0]] = row[1]
+for line in total_shopper_spend_file:
+    row = line.split()
+    total_shopper_spend[row[0]] = row[1]
+
+shopper_values = {}
+for shopper in has_bought_company:
+    
+
+    print shopper
+    print has_bought_company[shopper]
+    print str(has_bought_company_a[shopper])
+    shopper_values[shopper] = shopper + ' ' + str(has_bought_company[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_company_a[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_company_q[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_company_30[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_company_60[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_category[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_category_a[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_category_q[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_category_30[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_category_60[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_category_180[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_brand[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_brand_a[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_brand_q[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_brand_30[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_brand_60[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_brand_180[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_never_bought_company[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_never_bought_category[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_never_bought_brand[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_company_brand[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_company_category[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_category_brand[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_bought_company_category_brand[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_never_bought_company_brand[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_never_bought_company_category[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_never_bought_category_brand[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(has_never_bought_company_category_brand[shopper])
+    shopper_values[shopper] = shopper_values[shopper] + ' ' + str(total_shopper_spend[shopper])
+    
+variables = 'shopper' + ' ' + 'has_bought_company'
+variables = variables + ' ' + 'has_bought_company_a'
+variables = variables + ' ' + 'has_bought_company_q'
+variables = variables + ' ' + 'has_bought_company_30'
+variables = variables + ' ' + 'has_bought_company_60'
+variables = variables + ' ' + 'has_bought_company_180'
+variables = variables + ' ' + 'has_bought_category'
+variables = variables + ' ' + 'has_bought_category_a'
+variables = variables + ' ' + 'has_bought_category_q'
+variables = variables + ' ' + 'has_bought_category_30'
+variables = variables + ' ' + 'has_bought_category_60'
+variables = variables + ' ' + 'has_bought_category_180'
+variables = variables + ' ' + 'has_bought_brand'
+variables = variables + ' ' + 'has_bought_brand_a'
+variables = variables + ' ' + 'has_bought_brand_q'
+variables = variables + ' ' + 'has_bought_brand_30'
+variables = variables + ' ' + 'has_bought_brand_60'
+variables = variables + ' ' + 'has_bought_brand_180'
+variables = variables + ' ' + 'has_never_bought_company'
+variables = variables + ' ' + 'has_never_bought_category'
+variables = variables + ' ' + 'has_never_bought_brand'
+variables = variables + ' ' + 'has_bought_company_brand'
+variables = variables + ' ' + 'has_bought_company_category'
+variables = variables + ' ' + 'has_bought_category_brand'
+variables = variables + ' ' + 'has_bought_company_category_brand'
+variables = variables + ' ' + 'has_never_bought_company_brand'
+variables = variables + ' ' + 'has_never_bought_company_category'
+variables = variables + ' ' + 'has_never_bought_category_brand'
+variables = variables + ' ' + 'has_never_bought_company_category_brand'
+variables = variables + ' ' + 'total_shopper_spend'
+
+    
+    
+
+fileid = open('shoppers_challenge_features.txt', 'w')
+fileid.write(variables + '\n')
+for shopper in has_bought_company:
+    fileid.write(shopper_values[shopper] + '\n')
+    
+    
+    
+    
+    
