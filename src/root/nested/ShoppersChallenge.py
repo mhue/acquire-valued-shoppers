@@ -383,7 +383,7 @@ has_bought_brand_file = open('has_bought_brand.txt', 'r')
 #         
 has_never_bought_company = {}
 for row in has_bought_company_file:
-    if row.split()[1] == 0:
+    if int(row.split()[1]) == 0:
         has_never_bought_company[row.split()[0]] = 1
     else:
         has_never_bought_company[row.split()[0]] = 0
@@ -391,8 +391,7 @@ for row in has_bought_company_file:
 #          
 has_never_bought_category = {}
 for row in has_bought_category_file:
-    print row.split()[1]
-    if row.split()[1] == 0:
+    if int(row.split()[1]) == 0:
         has_never_bought_category[row.split()[0]] = 1
     else:
         has_never_bought_category[row.split()[0]] = 0
@@ -400,7 +399,7 @@ for row in has_bought_category_file:
           
 has_never_bought_brand = {}
 for row in has_bought_brand_file:
-    if row.split()[1] == 0:
+    if int(row.split()[1]) == 0:
         has_never_bought_brand[row.split()[0]] = 1
     else:
         has_never_bought_brand[row.split()[0]] = 0
@@ -459,11 +458,57 @@ for shopper in has_never_bought_company.keys():
     else:
         has_never_bought_company_category_brand[shopper] = 0
 
-# fileid = open('has_never_bought_company_category_brand.txt', 'w')
-# for shopper in has_never_bought_company_category_brand:
-#     fileid.write (shopper + ' ' + str(has_never_bought_company_category_brand[shopper]) + '\n')
-# fileid.close()
+fileid = open('has_never_bought_company.txt', 'w')
+for shopper in has_never_bought_company:
+    fileid.write (shopper + ' ' + str(has_never_bought_company[shopper]) + '\n')
+fileid.close()
+
+fileid = open('has_never_bought_category.txt', 'w')
+for shopper in has_never_bought_category:
+    fileid.write (shopper + ' ' + str(has_never_bought_category[shopper]) + '\n')
+fileid.close()
+
+fileid = open('has_never_bought_brand.txt', 'w')
+for shopper in has_never_bought_brand:
+    fileid.write (shopper + ' ' + str(has_never_bought_brand[shopper]) + '\n')
+fileid.close()
+
+fileid = open('has_bought_company_brand.txt', 'w')
+for shopper in has_bought_company_brand:
+    fileid.write (shopper + ' ' + str(has_bought_company_brand[shopper]) + '\n')
+fileid.close()
         
-
+fileid = open('has_bought_company_category.txt', 'w')
+for shopper in has_bought_company_category:
+    fileid.write (shopper + ' ' + str(has_bought_company_category[shopper]) + '\n')
+fileid.close()
     
+fileid = open('has_bought_category_brand.txt', 'w')
+for shopper in has_bought_category_brand:
+    fileid.write (shopper + ' ' + str(has_bought_category_brand[shopper]) + '\n')
+fileid.close()
 
+fileid = open('has_bought_company_category_brand.txt', 'w')
+for shopper in has_bought_company_category_brand:
+    fileid.write (shopper + ' ' + str(has_bought_company_category_brand[shopper]) + '\n')
+fileid.close()
+
+fileid = open('has_never_bought_company_category.txt', 'w')
+for shopper in has_never_bought_company_category:
+    fileid.write (shopper + ' ' + str(has_never_bought_company_category[shopper]) + '\n')
+fileid.close()
+
+fileid = open('has_never_bought_company_brand.txt', 'w')
+for shopper in has_never_bought_company_brand:
+    fileid.write (shopper + ' ' + str(has_never_bought_company_brand[shopper]) + '\n')
+fileid.close()
+
+fileid = open('has_never_bought_category_brand.txt', 'w')
+for shopper in has_never_bought_category_brand:
+    fileid.write (shopper + ' ' + str(has_never_bought_category_brand[shopper]) + '\n')
+fileid.close()
+
+fileid = open('has_never_bought_company_category_brand.txt', 'w')
+for shopper in has_never_bought_company_category_brand:
+    fileid.write (shopper + ' ' + str(has_never_bought_company_category_brand[shopper]) + '\n')
+fileid.close()
