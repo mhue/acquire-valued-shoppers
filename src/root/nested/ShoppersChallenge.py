@@ -422,38 +422,25 @@ def parsevowpalwabbitResults(outFile):
     fid = open('submissions/submission.csv', 'w')
     fid.write('\n'.join(t)+'\n')
     fid.close()
-# 
-# def runExperiments(library):
-#     folder = 'features'
-#     featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-#     features = [p.split('/')[-1][:-4] for p in featuresFiles]
-#     createTrainTestFiles(features, folder)
-#     tr = 'experiments/train.txt'
-#     te = 'experiments/test.txt'
-#     if library == 'liblinear':
-#         c = '~/liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
-#         '&& ~/liblinear-predict -b 1 experiments/test.txt ' + \
-#         'train.txt.model experiments/out.txt'
-#     if library == 'vowpalwabbit':
-#         c = '~'
-#     subprocess.call(c, shell=True)
-# 
-#     parseLiblinearResults('experiments/out.txt')
-# 
-# if __name__ == '__main__':
-# 
-#     # Uncomment to re-compute the features.
-#     # computeFeaturesFirstPass()
-#     #~ computeFeaturesSecondPass()
-#     #~ computeFeaturesThirdPass()
-#     
-#     runExperiments()
+ 
+def runExperiments(library):
+    folder = 'features'
+    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+    features = [p.split('/')[-1][:-4] for p in featuresFiles]
+    createTrainTestFiles(features, folder)
+    tr = 'experiments/train.txt'
+    te = 'experiments/test.txt'
+    if library == 'liblinear':
+        c = '~/liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
+        '&& ~/liblinear-predict -b 1 experiments/test.txt ' + \
+        'train.txt.model experiments/out.txt'
+    if library == 'vowpalwabbit':
+        c = '~'
+    subprocess.call(c, shell=True)
 
-# folder = 'features'
-# featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-# features = [p.split('/')[-1][:-4] for p in featuresFiles]
-# createTrainTestFiles(features, folder, 'vowpalwabbit')
-parsevowpalwabbitResults('experiments/vowpalwabbit/testpred1.txt')
+    parseLiblinearResults('experiments/out.txt')
+
+
 def runExperiments(folder):
     featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
     features = [p.split('/')[-1][:-4] for p in featuresFiles]
@@ -504,8 +491,13 @@ if __name__ == '__main__':
     #~ computeFeaturesSecondPass()
     #~ computeFeaturesThirdPass()
     
-    #~ normalizeFeatures('features', 'normalizedFeatures')
-    runExperiments('normalizedFeatures')
+    #~ normalizeFeatures('features', 'normalizedFeatures')    
+    # runExperiments()
 
+    folder = 'features'
+    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+    features = [p.split('/')[-1][:-4] for p in featuresFiles]
+    createTrainTestFiles(features, folder, 'vowpalwabbit')
+    parsevowpalwabbitResults('experiments/vowpalwabbit/testpred1.txt')
 
 
