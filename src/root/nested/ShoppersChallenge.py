@@ -3,6 +3,7 @@ Created on Jun 4, 2014
 
 @author: philipp
 '''
+import os
 import sys
 from time import strftime
 from datetime import datetime
@@ -11,6 +12,7 @@ from collections import defaultdict
 import csv
 import glob
 import subprocess
+import gzip
 
 company_of_offer = {}
 category_of_offer = {}
@@ -125,6 +127,9 @@ def getIds(phase):
     return ids
 
 def computeFeaturesFirstPass():
+    '''
+    Create 19 first features.
+    '''
 
     readOffers()
     readShoppers()
@@ -200,11 +205,11 @@ def computeFeaturesFirstPass():
             has_bought_brand_a[ID] += float(row[10])
         if brand_of_shopper[ID] == row[5]:
             has_bought_brand_q[ID] += float(row[9])
-        if brand_of_shopper[ID] == row[5] and time_between_dates(row[6], date_of_shopper[ID]) <= 30:
+        if brand_of_shopper[ID] == row[5] and dt <= 30:
             has_bought_brand_30[ID] += 1
-        if brand_of_shopper[ID] == row[5] and time_between_dates(row[6], date_of_shopper[ID]) <= 60:
+        if brand_of_shopper[ID] == row[5] and dt <= 60:
             has_bought_brand_60[ID] += 1
-        if brand_of_shopper[ID] == row[5] and time_between_dates(row[6], date_of_shopper[ID]) <= 180:
+        if brand_of_shopper[ID] == row[5] and dt <= 180:
             has_bought_brand_180[ID] += 1
         total_shopper_spend[ID] += float(row[10])
 
@@ -241,7 +246,9 @@ def computeFeaturesFirstPass():
     saveIt(total_shopper_spend, 'total_shopper_spend.txt')
 
 def computeFeaturesSecondPass():
-    
+    '''
+    Compute 3 more features.
+    '''
     has_bought_company = loadIt('has_bought_company.txt', convert = True)
     has_bought_category = loadIt('has_bought_category.txt', convert = True)
     has_bought_brand = loadIt('has_bought_brand.txt', convert = True)
@@ -273,10 +280,12 @@ def computeFeaturesSecondPass():
     saveIt(has_never_bought_brand, 'has_never_bought_brand.txt')
     
 def computeFeaturesThirdPass():
-    
-    has_never_bought_company = loadIt('has_never_bought_company.txt')
-    has_never_bought_category = loadIt('has_never_bought_category.txt')
-    has_never_bought_brand = loadIt('has_never_bought_brand.txt')
+    '''
+    Compute 8 more features.
+    '''
+    has_never_bought_company = loadIt('has_never_bought_company.txt', convert=True)
+    has_never_bought_category = loadIt('has_never_bought_category.txt', convert=True)
+    has_never_bought_brand = loadIt('has_never_bought_brand.txt', convert=True)
 
     has_bought_company_brand = {}
     has_bought_company_category = {}
@@ -396,7 +405,8 @@ def parseLiblinearResults(outFile):
     t = [header]
     for i in range(n):
         t.append(ids[i] + ',' + lines[i].split()[1])
-    fid = open('submissions/sub.csv', 'w')
+    fid = gzip.GzipFile('submissions/sub.csv.gz', 'w')
+    #~ fid = open('submissions/sub.csv', 'w')
     fid.write('\n'.join(t)+'\n')
     fid.close()
     
@@ -444,6 +454,58 @@ def parsevowpalwabbitResults(outFile):
 # features = [p.split('/')[-1][:-4] for p in featuresFiles]
 # createTrainTestFiles(features, folder, 'vowpalwabbit')
 parsevowpalwabbitResults('experiments/vowpalwabbit/testpred1.txt')
+def runExperiments(folder):
+    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+    features = [p.split('/')[-1][:-4] for p in featuresFiles]
+    createTrainTestFiles(features, folder)
+    tr = 'experiments/train.txt'
+    te = 'experiments/test.txt'
+    c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
+        '&& liblinear-predict -b 1 experiments/test.txt ' + \
+        'train.txt.model experiments/out.txt'
+    subprocess.call(c, shell=True)
+
+    parseLiblinearResults('experiments/out.txt')
+
+def normalizeFeatures(inputFolder, outputFolder):
+    if not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
+    paths = glob.glob(inputFolder + '/*.txt')
+    features = [ p.split('/')[-1][:-4] for p in paths]
+    for f in features:
+        lines = open(inputFolder + '/' + f + '.txt').readlines()
+        minValue, maxValue = None, None
+        d = {}
+        for line in lines:
+            words = line.split()
+            k = words[0]
+            v = float(words[1])
+            d[k] = v
+            if minValue == None:
+                minValue = v
+                maxValue = v
+            if v < minValue:
+                minValue = v
+            if v > maxValue:
+                maxValue = v
+        toWrite = []
+        for k in d:
+            normalizedValue = (d[k] - minValue) / (maxValue - minValue)
+            toWrite.append(k + ' ' + str(normalizedValue))
+        fout = open(outputFolder + '/' + f + '.txt', 'w')
+        fout.write('\n'.join(toWrite)+'\n')
+        fout.close()
+    
+
+if __name__ == '__main__':
+
+    # Uncomment to re-compute the features.
+    # computeFeaturesFirstPass()
+    #~ computeFeaturesSecondPass()
+    #~ computeFeaturesThirdPass()
+    
+    #~ normalizeFeatures('features', 'normalizedFeatures')
+    runExperiments('normalizedFeatures')
 
 
 
