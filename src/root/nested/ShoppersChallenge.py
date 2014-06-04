@@ -423,36 +423,23 @@ def parsevowpalwabbitResults(outFile):
     fid.write('\n'.join(t)+'\n')
     fid.close()
  
-def runExperiments(library):
-    folder = 'features'
-    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-    features = [p.split('/')[-1][:-4] for p in featuresFiles]
-    createTrainTestFiles(features, folder)
-    tr = 'experiments/train.txt'
-    te = 'experiments/test.txt'
+
+def runExperiments(library, folder):
     if library == 'liblinear':
-        c = '~/liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
-        '&& ~/liblinear-predict -b 1 experiments/test.txt ' + \
-        'train.txt.model experiments/out.txt'
+        featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+        features = [p.split('/')[-1][:-4] for p in featuresFiles]
+        createTrainTestFiles(features, folder)
+        tr = 'experiments/train.txt'
+        te = 'experiments/test.txt'
+        c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
+            '&& liblinear-predict -b 1 experiments/test.txt ' + \
+            'train.txt.model experiments/out.txt'
+        subprocess.call(c, shell=True)
+
+        parseLiblinearResults('experiments/out.txt')
     if library == 'vowpalwabbit':
-        c = '~'
-    subprocess.call(c, shell=True)
+        pass
 
-    parseLiblinearResults('experiments/out.txt')
-
-
-def runExperiments(folder):
-    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-    features = [p.split('/')[-1][:-4] for p in featuresFiles]
-    createTrainTestFiles(features, folder)
-    tr = 'experiments/train.txt'
-    te = 'experiments/test.txt'
-    c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
-        '&& liblinear-predict -b 1 experiments/test.txt ' + \
-        'train.txt.model experiments/out.txt'
-    subprocess.call(c, shell=True)
-
-    parseLiblinearResults('experiments/out.txt')
 
 def normalizeFeatures(inputFolder, outputFolder):
     if not os.path.exists(outputFolder):
@@ -492,7 +479,7 @@ if __name__ == '__main__':
     #~ computeFeaturesThirdPass()
     
     #~ normalizeFeatures('features', 'normalizedFeatures')    
-    # runExperiments()
+    # runExperiments('liblinear','features')
 
     folder = 'features'
     featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
