@@ -1,5 +1,5 @@
 '''
-Created on Jun 3, 2014
+Created on Jun 4, 2014
 
 @author: philipp
 '''
@@ -355,8 +355,7 @@ def readTargets():
     fid.close()
     return target_of_shopper
     
-def createTrainTestFiles(features, folder):
-    
+def createTrainTestFiles(features, folder, library):
     target_of_shopper = readTargets()
     nf = len(features)
 
@@ -375,7 +374,10 @@ def createTrainTestFiles(features, folder):
             target = '0'
             if phase == 'train':
                 target = target_of_shopper[ids[i]]
-            words = [str(target)]
+            if library == 'liblinear':
+                words = [str(target)]
+            if library == 'vowpalwabbit':
+                words = [str(target) + ' |']
             for j in range(nf):
                 words.append(str(j+1) + ':' + f[j][ids[i]])
             line = ' '.join(words)
@@ -383,6 +385,7 @@ def createTrainTestFiles(features, folder):
         fid = open('experiments/' + phase + '.txt', 'w')
         fid.write('\n'.join(lines)+'\n')
         fid.close()
+
 
 def parseLiblinearResults(outFile):
     ids = getIds('test')
@@ -396,29 +399,51 @@ def parseLiblinearResults(outFile):
     fid = open('submissions/sub.csv', 'w')
     fid.write('\n'.join(t)+'\n')
     fid.close()
-
-def runExperiments():
-    folder = 'features'
-    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-    features = [p.split('/')[-1][:-4] for p in featuresFiles]
-    createTrainTestFiles(features, folder)
-    tr = 'experiments/train.txt'
-    te = 'experiments/test.txt'
-    c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
-        '&& liblinear-predict -b 1 experiments/test.txt ' + \
-        'train.txt.model experiments/out.txt'
-    subprocess.call(c, shell=True)
-
-    parseLiblinearResults('experiments/out.txt')
-
-if __name__ == '__main__':
-
-    # Uncomment to re-compute the features.
-    # computeFeaturesFirstPass()
-    #~ computeFeaturesSecondPass()
-    #~ computeFeaturesThirdPass()
     
-    runExperiments()
+def parsevowpalwabbitResults(outFile):
+    ids = getIds('test')
+    n = len(ids)
+    predictions = []
+    lines = open(outFile).readlines()
+    header = 'id,repeatProbability'
+    t = [header]
+    for i in range(n):
+        t.append(ids[i] + ',' + lines[i].strip())
+    fid = open('submissions/submission.csv', 'w')
+    fid.write('\n'.join(t)+'\n')
+    fid.close()
+# 
+# def runExperiments(library):
+#     folder = 'features'
+#     featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+#     features = [p.split('/')[-1][:-4] for p in featuresFiles]
+#     createTrainTestFiles(features, folder)
+#     tr = 'experiments/train.txt'
+#     te = 'experiments/test.txt'
+#     if library == 'liblinear':
+#         c = '~/liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
+#         '&& ~/liblinear-predict -b 1 experiments/test.txt ' + \
+#         'train.txt.model experiments/out.txt'
+#     if library == 'vowpalwabbit':
+#         c = '~'
+#     subprocess.call(c, shell=True)
+# 
+#     parseLiblinearResults('experiments/out.txt')
+# 
+# if __name__ == '__main__':
+# 
+#     # Uncomment to re-compute the features.
+#     # computeFeaturesFirstPass()
+#     #~ computeFeaturesSecondPass()
+#     #~ computeFeaturesThirdPass()
+#     
+#     runExperiments()
+
+# folder = 'features'
+# featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+# features = [p.split('/')[-1][:-4] for p in featuresFiles]
+# createTrainTestFiles(features, folder, 'vowpalwabbit')
+parsevowpalwabbitResults('experiments/vowpalwabbit/testpred1.txt')
 
 
 
