@@ -126,6 +126,33 @@ def getIds(phase):
     fid.close()
     return ids
 
+def reduceTransactions():
+
+    readOffers()
+    fin = open('transactions.csv')
+    fout = open('transactions_reduced.csv', 'w')
+    cr = csv.reader(fin)
+    header = cr.next()
+    fout.writeline(','.join(header)
+
+    IDIndex = header.index('id')
+    categoryIndex = header.index('category')
+    companyIndex = header.index('company')
+    brandIndex = header.index('brand')
+    dateIndex = header.index('date')
+    quantityIndex = header.index('purchasequantity')
+
+    for row in cr:
+        ID = row[IDIndex]
+        company = row[companyIndex]
+        category = row[categoryIndex]
+        brand = row[brandIndex]
+        quantity = row[quantityIndex]
+        
+    fin.close()
+    fout.close()
+    
+
 def computeFeaturesFirstPass():
     '''
     Create 19 first features.
@@ -504,10 +531,10 @@ if __name__ == '__main__':
 
     # Uncomment to re-compute the features.
     # computeFeaturesFirstPass()
-    #~ computeFeaturesSecondPass()
-    #~ computeFeaturesThirdPass()
+    # computeFeaturesSecondPass()
+    # computeFeaturesThirdPass()
     
-    #~ normalizeFeatures('features', 'normalizedFeatures')    
+    # normalizeFeatures('features', 'normalizedFeatures')    
     # runExperiments('liblinear','features', 'submissions/sub-liblinear-normalized.csv.gz')
 
     runExperiments('vowpalwabbit', 'normalizedFeatures', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
