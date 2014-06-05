@@ -365,14 +365,20 @@ def readTargets():
     return target_of_shopper
     
 def createTrainTestFiles(features, folder, library):
+
+    outputFolder = 'experiments' + '/' + library
+    if not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
     target_of_shopper = readTargets()
     nf = len(features)
-
     f = [{} for i in range(nf)]
+    
     # Load the dictionaries
     for i in range(nf):
+        
         featuresFile = features[i] +'.txt'
         f[i] = loadIt(featuresFile, folder = folder)    
+    
     # Write the features
     for phase in ['train', 'test']:
 
@@ -391,55 +397,78 @@ def createTrainTestFiles(features, folder, library):
                 words.append(str(j+1) + ':' + f[j][ids[i]])
             line = ' '.join(words)
             lines.append(line)
-        fid = open('experiments/' + phase + '.txt', 'w')
+        fid = open(outputFolder + '/' + phase + '.txt', 'w')
         fid.write('\n'.join(lines)+'\n')
         fid.close()
 
-
-def parseLiblinearResults(outFile):
+def parseLiblinearResults(resultsFile, submissionFile):
     ids = getIds('test')
     n = len(ids)
     predictions = []
-    lines = open(outFile).readlines()[1:]
+    lines = open(resultsFile).readlines()[1:]
     header = 'id,repeatProbability'
     t = [header]
     for i in range(n):
         t.append(ids[i] + ',' + lines[i].split()[1])
-    fid = gzip.GzipFile('submissions/sub.csv.gz', 'w')
-    #~ fid = open('submissions/sub.csv', 'w')
+    fid = gzip.GzipFile(submissionFile, 'w')
     fid.write('\n'.join(t)+'\n')
     fid.close()
     
-def parsevowpalwabbitResults(outFile):
+def parsevowpalwabbitResults(resultsFile, submissionFile):
     ids = getIds('test')
     n = len(ids)
     predictions = []
-    lines = open(outFile).readlines()
+    lines = open(resultsFile).readlines()
     header = 'id,repeatProbability'
     t = [header]
     for i in range(n):
         t.append(ids[i] + ',' + lines[i].strip())
-    fid = open('submissions/submission.csv', 'w')
+    fid = gzip.GzipFile(submissionFile, 'w')
     fid.write('\n'.join(t)+'\n')
     fid.close()
- 
 
-def runExperiments(library, folder):
+def processResults(library, results, submissionFile):
     if library == 'liblinear':
-        featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-        features = [p.split('/')[-1][:-4] for p in featuresFiles]
-        createTrainTestFiles(features, folder)
-        tr = 'experiments/train.txt'
-        te = 'experiments/test.txt'
-        c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 experiments/train.txt ' + \
-            '&& liblinear-predict -b 1 experiments/test.txt ' + \
-            'train.txt.model experiments/out.txt'
+        parseLiblinearResults(results, submissionFile)
+    if library == 'vowpalwabbit':
+        parsevowpalwabbitResults(results, submissionFile)
+
+def runExperiments(library, folder, submissionFile, createTrainTest = True):
+
+    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+    features = [p.split('/')[-1][:-4] for p in featuresFiles]
+    if createTrainTest:
+        createTrainTestFiles(features, folder, library)
+    
+    if library == 'liblinear':
+
+        trainFile = 'experiments/%s/train.txt' % library
+        modelFile = 'experiments/%s/model.txt' % library
+        testFile = 'experiments/%s/test.txt' % library
+        resultsFile = 'experiments/%s/out.txt'
+
+        c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 ' + \
+            trainFile + ' ' + modelFile + \
+            '&& liblinear-predict -b 1 ' + \
+            testFile + ' ' + \
+            modelFile + ' ' + \
+            resultsFile
         subprocess.call(c, shell=True)
 
-        parseLiblinearResults('experiments/out.txt')
     if library == 'vowpalwabbit':
-        pass
+        
+        trainFile = 'experiments/%s/train.txt' % library
+        modelFile = 'experiments/%s/model.txt' % library
+        testFile = 'experiments/%s/test.txt' % library
+        resultsFile = 'experiments/%s/out.txt' % library
 
+        c = 'vw ' + trainFile + ' -f ' + modelFile + ' ' + \
+            ' && vw -i ' + modelFile + ' --loss_function quantile ' + \
+            '-t ' + testFile + ' ' + \
+            '-p ' + resultsFile
+        print c
+        subprocess.call(c, shell=True)
+    processResults(library, resultsFile, submissionFile)
 
 def normalizeFeatures(inputFolder, outputFolder):
     if not os.path.exists(outputFolder):
@@ -479,12 +508,8 @@ if __name__ == '__main__':
     #~ computeFeaturesThirdPass()
     
     #~ normalizeFeatures('features', 'normalizedFeatures')    
-    # runExperiments('liblinear','features')
+    # runExperiments('liblinear','features', 'submissions/sub-liblinear-normalized.csv.gz')
 
-    folder = 'features'
-    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-    features = [p.split('/')[-1][:-4] for p in featuresFiles]
-    createTrainTestFiles(features, folder, 'vowpalwabbit')
-    parsevowpalwabbitResults('experiments/vowpalwabbit/testpred1.txt')
+    runExperiments('vowpalwabbit', 'normalizedFeatures', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
 
 
