@@ -327,8 +327,8 @@ def computeFeaturesSecondPass():
     total_n = dict(zip(ids, [0] * n))
     total_a = dict(zip(ids, [0] * n))
 
-    transactionsSubsetFile = gzip.GzipFile('transactions.csv.gz', 'rU')
-    transactions = csv.reader(transactionsfile)
+    fid = gzip.GzipFile('transactions.csv.gz', 'rU')
+    transactions = csv.reader(fid)
     header = transactions.next()
 
     IDIndex = header.index('id')
@@ -367,6 +367,7 @@ def computeFeaturesSecondPass():
         steps += 1
 
     print >>sys.stderr
+    fid.close()
 
     # Save the results in text files.
     saveIt(total_n, 'total_n.txt')
@@ -528,8 +529,8 @@ def normalizeFeatures(inputFolder, outputFolder):
 if __name__ == '__main__':
 
     # Uncomment to re-compute the features.
-    computeFeaturesFirstPass()
-    # computeFeaturesSecondPass()
+    # computeFeaturesFirstPass()
+    computeFeaturesSecondPass()
     
     # normalizeFeatures('features', 'normalizedFeatures')    
     # runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
