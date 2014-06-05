@@ -133,7 +133,7 @@ def reduceTransactions():
     fout = open('transactions_reduced.csv', 'w')
     cr = csv.reader(fin)
     header = cr.next()
-    fout.writeline(','.join(header)
+    fout.writeline(','.join(header))
 
     IDIndex = header.index('id')
     categoryIndex = header.index('category')
