@@ -534,10 +534,10 @@ if __name__ == '__main__':
     # computeFeaturesSecondPass()
     # computeFeaturesThirdPass()
     
-    # normalizeFeatures('features', 'normalizedFeatures')    
-    # runExperiments('liblinear','features', 'submissions/sub-liblinear-normalized.csv.gz')
+    #~ normalizeFeatures('features', 'normalizedFeatures')    
+    runExperiments('liblinear','features', 'submissions/sub-liblinear-normalized.csv.gz')
 
-    runExperiments('vowpalwabbit', 'normalizedFeatures', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
+    runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
 
 
 
