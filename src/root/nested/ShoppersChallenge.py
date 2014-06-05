@@ -472,7 +472,7 @@ def runExperiments(library, folder, submissionFile, createTrainTest = True):
         trainFile = 'experiments/%s/train.txt' % library
         modelFile = 'experiments/%s/model.txt' % library
         testFile = 'experiments/%s/test.txt' % library
-        resultsFile = 'experiments/%s/out.txt'
+        resultsFile = 'experiments/%s/out.txt'% library
 
         c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 ' + \
             trainFile + ' ' + modelFile + \
@@ -534,9 +534,9 @@ if __name__ == '__main__':
     # computeFeaturesSecondPass()
     # computeFeaturesThirdPass()
     
-    #~ normalizeFeatures('features', 'normalizedFeatures')    
-    runExperiments('liblinear','features', 'submissions/sub-liblinear-normalized.csv.gz')
+    # normalizeFeatures('features', 'normalizedFeatures')    
 
+    runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
     runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
 
 
