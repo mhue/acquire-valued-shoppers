@@ -535,9 +535,9 @@ if __name__ == '__main__':
     # computeFeaturesThirdPass()
     
     # normalizeFeatures('features', 'normalizedFeatures')    
-    runExperiments('liblinear','features', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
 
-    runExperiments('vowpalwabbit', 'normalizedFeatures', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
+    runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
+    runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
 
 
 
