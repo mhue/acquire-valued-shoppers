@@ -34,6 +34,7 @@ def readOffers():
     brandIndex = header_offers.index('brand')
     
     for row in offers:
+        
         offer = row[offerIndex]
         category = row[categoryIndex]
         quantity = row[quantityIndex]
@@ -126,14 +127,18 @@ def getIds(phase):
     fid.close()
     return ids
 
-def reduceTransactions():
-
+def computeTransactionsSubset():
+    '''
+    Computes a subset of the transactions.
+    Only keep the rows with a known company, category or offer.
+    '''
+    
     readOffers()
-    fin = open('transactions.csv')
-    fout = open('transactions_reduced.csv', 'w')
+    fin = gzip.GzipFile('transactions.csv.gz')
+    fout = gzip.GzipFile('transactions_subset.csv.gz', 'w')
     cr = csv.reader(fin)
     header = cr.next()
-    fout.writeline(','.join(header))
+    fout.write(','.join(header) + '\n')
 
     IDIndex = header.index('id')
     categoryIndex = header.index('category')
@@ -142,13 +147,21 @@ def reduceTransactions():
     dateIndex = header.index('date')
     quantityIndex = header.index('purchasequantity')
 
+    steps = 0
+    N = 1000000
     for row in cr:
         ID = row[IDIndex]
         company = row[companyIndex]
         category = row[categoryIndex]
         brand = row[brandIndex]
         quantity = row[quantityIndex]
-        
+        if company in company_of_offer or category in category_of_offer or \
+            brand in brand_of_offer:
+                fout.write(','.join(row) + '\n')
+        if steps % N == 0:
+            print >>sys.stderr, steps / N,
+        steps += 1
+
     fin.close()
     fout.close()
     
@@ -182,7 +195,7 @@ def computeFeaturesFirstPass():
     has_bought_brand_180 = dict(zip(ids, [0] * len(ids)))
     total_shopper_spend = dict(zip(ids, [0] * len(ids)))
 
-    transactionsfile = file('transactions.csv', 'rU')
+    transactionsfile = gzip.GzipFile('transactions.csv.gz', 'rU')
     transactions = csv.reader(transactionsfile)
     header = transactions.next()
 
@@ -244,10 +257,7 @@ def computeFeaturesFirstPass():
         if steps % N == 0:
             print >>sys.stderr, steps / N,
         steps += 1
-        
-        # DEBUG
-        #~ if steps == 100000:
-            #~ break
+
         
     print >>sys.stderr
 
@@ -535,9 +545,11 @@ if __name__ == '__main__':
     # computeFeaturesThirdPass()
     
     # normalizeFeatures('features', 'normalizedFeatures')    
+    # runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
+    
+    # runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
 
-    runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
-    runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
 
+    computeTransactionsSubset()
 
 
