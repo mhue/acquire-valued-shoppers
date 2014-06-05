@@ -133,7 +133,7 @@ def reduceTransactions():
     fout = open('transactions_reduced.csv', 'w')
     cr = csv.reader(fin)
     header = cr.next()
-    fout.writeline(','.join(header)
+    fout.writeline(','.join(header))
 
     IDIndex = header.index('id')
     categoryIndex = header.index('category')
@@ -472,7 +472,7 @@ def runExperiments(library, folder, submissionFile, createTrainTest = True):
         trainFile = 'experiments/%s/train.txt' % library
         modelFile = 'experiments/%s/model.txt' % library
         testFile = 'experiments/%s/test.txt' % library
-        resultsFile = 'experiments/%s/out.txt'
+        resultsFile = 'experiments/%s/out.txt'% library
 
         c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 ' + \
             trainFile + ' ' + modelFile + \
@@ -535,7 +535,7 @@ if __name__ == '__main__':
     # computeFeaturesThirdPass()
     
     # normalizeFeatures('features', 'normalizedFeatures')    
-    # runExperiments('liblinear','features', 'submissions/sub-liblinear-normalized.csv.gz')
+    runExperiments('liblinear','features', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
 
     runExperiments('vowpalwabbit', 'normalizedFeatures', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
 
