@@ -134,6 +134,11 @@ def computeTransactionsSubset():
     '''
     
     readOffers()
+    
+    companies = dict(zip(company_of_offer.values(), [0] * len(company_of_offer)))
+    categories = dict(zip(category_of_offer.values(), [0] * len(category_of_offer)))
+    brands = dict(zip(brand_of_offer.values(), [0] * len(brand_of_offer)))
+    
     fin = gzip.GzipFile('transactions.csv.gz')
     fout = gzip.GzipFile('transactions_subset.csv.gz', 'w')
     cr = csv.reader(fin)
@@ -155,236 +160,219 @@ def computeTransactionsSubset():
         category = row[categoryIndex]
         brand = row[brandIndex]
         quantity = row[quantityIndex]
-        if company in company_of_offer or category in category_of_offer or \
-            brand in brand_of_offer:
-                fout.write(','.join(row) + '\n')
+        if company in companies or category in categories or brand in brands:
+            fout.write(','.join(row) + '\n')
         if steps % N == 0:
-            print >>sys.stderr, steps / N,
+            print >> sys.stderr, steps / N,
         steps += 1
-
+    print >> sys.stderr
     fin.close()
     fout.close()
     
 
 def computeFeaturesFirstPass():
     '''
-    Create 19 first features.
+    Create the first 25 features.
+    Those features are quick to compute, because only 10 % of the transactions
+    are needed.
     '''
 
     readOffers()
     readShoppers()
     
     ids = getIds('train') + getIds('test')
-    has_bought_company = dict(zip(ids, [0] * len(ids)))
-    has_bought_company_a = dict(zip(ids, [0] * len(ids)))
-    has_bought_company_q = dict(zip(ids, [0] * len(ids)))
-    has_bought_company_30 = dict(zip(ids, [0] * len(ids)))
-    has_bought_company_60 = dict(zip(ids, [0] * len(ids)))
-    has_bought_company_180 = dict(zip(ids, [0] * len(ids)))
-    has_bought_category = dict(zip(ids, [0] * len(ids)))
-    has_bought_category_a = dict(zip(ids, [0] * len(ids)))
-    has_bought_category_q = dict(zip(ids, [0] * len(ids)))
-    has_bought_category_30 = dict(zip(ids, [0] * len(ids)))
-    has_bought_category_60 = dict(zip(ids, [0] * len(ids)))
-    has_bought_category_180 = dict(zip(ids, [0] * len(ids)))
-    has_bought_brand = dict(zip(ids, [0] * len(ids)))
-    has_bought_brand_a = dict(zip(ids, [0] * len(ids)))
-    has_bought_brand_q = dict(zip(ids, [0] * len(ids)))
-    has_bought_brand_30 = dict(zip(ids, [0] * len(ids)))
-    has_bought_brand_60 = dict(zip(ids, [0] * len(ids)))
-    has_bought_brand_180 = dict(zip(ids, [0] * len(ids)))
-    total_shopper_spend = dict(zip(ids, [0] * len(ids)))
+    n = len(ids)
+    
+    company_n = dict(zip(ids, [0] * n))
+    company_a = dict(zip(ids, [0] * n))
+    company_q = dict(zip(ids, [0] * n))
+    company_30 = dict(zip(ids, [0] * n))
+    company_60 = dict(zip(ids, [0] * n))
+    company_180 = dict(zip(ids, [0] * n))
+    category_n = dict(zip(ids, [0] * n))
+    category_a = dict(zip(ids, [0] * n))
+    category_q = dict(zip(ids, [0] * n))
+    category_30 = dict(zip(ids, [0] * n))
+    category_60 = dict(zip(ids, [0] * n))
+    category_180 = dict(zip(ids, [0] * n))
+    brand_n = dict(zip(ids, [0] * n))
+    brand_a = dict(zip(ids, [0] * n))
+    brand_q = dict(zip(ids, [0] * n))
+    brand_30 = dict(zip(ids, [0] * n))
+    brand_60 = dict(zip(ids, [0] * n))
+    brand_180 = dict(zip(ids, [0] * n))
+    has_bought_company = dict(zip(ids, [0] * n))
+    has_bought_category = dict(zip(ids, [0] * n))
+    has_bought_brand = dict(zip(ids, [0] * n))
+    has_bought_company_brand = dict(zip(ids, [0] * n))
+    has_bought_company_category = dict(zip(ids, [0] * n))
+    has_bought_category_brand = dict(zip(ids, [0] * n))
+    has_bought_company_category_brand = dict(zip(ids, [0] * n))
 
-    transactionsfile = gzip.GzipFile('transactions.csv.gz', 'rU')
-    transactions = csv.reader(transactionsfile)
+    fid = gzip.GzipFile('transactions_subset.csv.gz', 'rU')
+    transactions = csv.reader(fid)
     header = transactions.next()
 
     IDIndex = header.index('id')
+    chainIndex = header.index('chain')
+    deptIndex = header.index('dept')
     categoryIndex = header.index('category')
     companyIndex = header.index('company')
     brandIndex = header.index('brand')
     dateIndex = header.index('date')
+    productsizeIndex = header.index('productsize')
+    measureIndex = header.index('productmeasure')
     quantityIndex = header.index('purchasequantity')
+    amountIndex = header.index('purchaseamount')
     
     steps = 0
     for row in transactions:
+
         ID = row[IDIndex]
-        company = row[companyIndex]
+        chain = row[chainIndex]
+        dept = row[deptIndex]
         category = row[categoryIndex]
+        company = row[companyIndex]
         brand = row[brandIndex]
-        quantity = row[quantityIndex]
-        dt = time_between_dates(row[6], date_of_shopper[ID])
-        
+        date = row[dateIndex]
+        productsize = row[productsizeIndex]
+        measure = row[measureIndex]
+        quantity = float(row[quantityIndex])
+        amount = float(row[amountIndex])
+
+        dt = time_between_dates(date, date_of_shopper[ID])
+                
         if company_of_shopper[ID] == company:
-            has_bought_company[ID] += 1
-        if company_of_shopper[ID] == company:
-            has_bought_company_a[ID] += float(row[10])
-        if company_of_shopper[ID] == company:
-            has_bought_company_q[ID] += float(row[9])
-        if company_of_shopper[ID] == company and dt <= 30:
-            has_bought_company_30[ID] += 1
-        if company_of_shopper[ID] == company and dt <= 60:
-            has_bought_company_60[ID] += 1
-        if company_of_shopper[ID] == company and dt <= 180:
-            has_bought_company_180[ID] += 1
-        if category_of_shopper[ID] == row[3]:
-            has_bought_category[ID] += 1
-        if category_of_shopper[ID] == row[3]:
-            has_bought_category_a[ID] += float(row[10])
-        if category_of_shopper[ID] == row[3]:
-            has_bought_category_q[ID] += float(row[9])
-        if category_of_shopper[ID] == row[3] and dt <= 30:
-            has_bought_category_30[ID] += 1
-        if category_of_shopper[ID] == row[3] and dt <= 60:
-            has_bought_category_60[ID] += 1
-        if category_of_shopper[ID] == row[3] and dt <= 180:
-            has_bought_category_180[ID] += 1
-        if brand_of_shopper[ID] == row[5]:
-            has_bought_brand[ID] += 1
-        if brand_of_shopper[ID] == row[5]:
-            has_bought_brand_a[ID] += float(row[10])
-        if brand_of_shopper[ID] == row[5]:
-            has_bought_brand_q[ID] += float(row[9])
-        if brand_of_shopper[ID] == row[5] and dt <= 30:
-            has_bought_brand_30[ID] += 1
-        if brand_of_shopper[ID] == row[5] and dt <= 60:
-            has_bought_brand_60[ID] += 1
-        if brand_of_shopper[ID] == row[5] and dt <= 180:
-            has_bought_brand_180[ID] += 1
-        total_shopper_spend[ID] += float(row[10])
+            company_n[ID] += 1
+            company_a[ID] += float(row[10])
+            company_q[ID] += quantity
+            if dt <= 30:
+                company_30[ID] += 1
+            if dt <= 60:
+                company_60[ID] += 1
+            if dt <= 180:
+                company_180[ID] += 1
+        if category_of_shopper[ID] == category:
+            category_n[ID] += 1
+            category_a[ID] += float(row[10])
+            category_q[ID] += quantity
+            if dt <= 30:
+                category_30[ID] += 1
+            if dt <= 60:
+                category_60[ID] += 1
+            if dt <= 180:
+                category_180[ID] += 1
+        if brand_of_shopper[ID] == brand:
+            brand_n[ID] += 1
+            brand_a[ID] += float(row[10])
+            brand_q[ID] += quantity
+            if dt <= 30:
+                brand_30[ID] += 1
+            if dt <= 60:
+                brand_60[ID] += 1
+            if dt <= 180:
+                brand_180[ID] += 1
 
         N = 1000000
         if steps % N == 0:
             print >>sys.stderr, steps / N,
         steps += 1
 
-        
+    fid.close()
     print >>sys.stderr
 
     # Save the results in text files.
+    saveIt(company_n, 'company_n.txt')
+    saveIt(company_a, 'company_a.txt')
+    saveIt(company_q, 'company_q.txt')
+    saveIt(company_30, 'company_30.txt')
+    saveIt(company_60, 'company_60.txt')
+    saveIt(company_180, 'company_180.txt')
+    saveIt(category_n, 'category_n.txt')
+    saveIt(category_a, 'category_a.txt')
+    saveIt(category_q, 'category_q.txt')
+    saveIt(category_30, 'category_30.txt')
+    saveIt(category_60, 'category_60.txt')
+    saveIt(category_180, 'category_180.txt')
+    saveIt(brand_n, 'brand_n.txt')
+    saveIt(brand_a, 'brand_a.txt')
+    saveIt(brand_q, 'brand_q.txt')
+    saveIt(brand_30, 'brand_30.txt')
+    saveIt(brand_60, 'brand_60.txt')
+    saveIt(brand_180, 'brand_180.txt')
     saveIt(has_bought_company, 'has_bought_company.txt')
-    saveIt(has_bought_company_a, 'has_bought_company_a.txt')
-    saveIt(has_bought_company_q, 'has_bought_company_q.txt')
-    saveIt(has_bought_company_30, 'has_bought_company_30.txt')
-    saveIt(has_bought_company_60, 'has_bought_company_60.txt')
-    saveIt(has_bought_company_180, 'has_bought_company_180.txt')
     saveIt(has_bought_category, 'has_bought_category.txt')
-    saveIt(has_bought_category_a, 'has_bought_category_a.txt')
-    saveIt(has_bought_category_q, 'has_bought_category_q.txt')
-    saveIt(has_bought_category_30, 'has_bought_category_30.txt')
-    saveIt(has_bought_category_60, 'has_bought_category_60.txt')
-    saveIt(has_bought_category_180, 'has_bought_category_180.txt')
     saveIt(has_bought_brand, 'has_bought_brand.txt')
-    saveIt(has_bought_brand_a, 'has_bought_brand_a.txt')
-    saveIt(has_bought_brand_q, 'has_bought_brand_q.txt')
-    saveIt(has_bought_brand_30, 'has_bought_brand_30.txt')
-    saveIt(has_bought_brand_60, 'has_bought_brand_60.txt')
-    saveIt(has_bought_brand_180, 'has_bought_brand_180.txt')
-    saveIt(total_shopper_spend, 'total_shopper_spend.txt')
-
-def computeFeaturesSecondPass():
-    '''
-    Compute 3 more features.
-    '''
-    has_bought_company = loadIt('has_bought_company.txt', convert = True)
-    has_bought_category = loadIt('has_bought_category.txt', convert = True)
-    has_bought_brand = loadIt('has_bought_brand.txt', convert = True)
-
-    has_never_bought_company = {}
-    for key in has_bought_company:
-        if has_bought_company[key] == 0:
-            has_never_bought_company[key] = 1
-        else:
-            has_never_bought_company[key] = 0
-
-    has_never_bought_category = {}
-    for key in has_bought_category:
-        if has_bought_category[key] == 0:
-            has_never_bought_category[key] = 1
-        else:
-            has_never_bought_category[key] = 0
-              
-              
-    has_never_bought_brand = {}
-    for key in has_bought_brand:
-        if has_bought_brand[key] == 0:
-            has_never_bought_brand[key] = 1
-        else:
-            has_never_bought_brand[key] = 0
-
-    saveIt(has_never_bought_company, 'has_never_bought_company.txt')
-    saveIt(has_never_bought_category, 'has_never_bought_category.txt')
-    saveIt(has_never_bought_brand, 'has_never_bought_brand.txt')
-    
-def computeFeaturesThirdPass():
-    '''
-    Compute 8 more features.
-    '''
-    has_never_bought_company = loadIt('has_never_bought_company.txt', convert=True)
-    has_never_bought_category = loadIt('has_never_bought_category.txt', convert=True)
-    has_never_bought_brand = loadIt('has_never_bought_brand.txt', convert=True)
-
-    has_bought_company_brand = {}
-    has_bought_company_category = {}
-    has_bought_category_brand = {} 
-    has_bought_company_category_brand = {}
-    
-    has_never_bought_company_category = {}
-    has_never_bought_company_brand = {}
-    has_never_bought_category_brand = {}
-    has_never_bought_company_category_brand = {}
-      
-    for shopper in has_never_bought_company.keys():
-        if has_never_bought_company[shopper] == 1 or has_never_bought_brand[shopper] == 1:
-            has_bought_company_brand[shopper] = 0
-        else:
-            has_bought_company_brand[shopper] = 1
-               
-        if has_never_bought_company[shopper] == 1 or has_never_bought_category[shopper] == 1:
-            has_bought_company_category[shopper] = 0
-        else:
-            has_bought_company_category[shopper] = 1
-       
-        if has_never_bought_category[shopper] == 1 or has_never_bought_brand[shopper] == 1:
-            has_bought_category_brand[shopper] = 0
-        else:
-            has_bought_category_brand[shopper] = 1
-               
-        if has_never_bought_category[shopper] == 1 or has_never_bought_category[shopper] == 1 or has_never_bought_brand == 1:
-            has_bought_company_category_brand[shopper] = 0
-        else: 
-            has_bought_company_category_brand[shopper] = 1
-      
-        if has_never_bought_company[shopper] == 1 and has_never_bought_category[shopper] == 1:
-            has_never_bought_company_category[shopper] = 1
-        else:
-            has_never_bought_company_category[shopper] = 0
-      
-        if has_never_bought_company[shopper] == 1 and has_never_bought_brand[shopper] == 1:
-            has_never_bought_company_brand[shopper] = 1
-        else:
-            has_never_bought_company_brand[shopper] = 0       
-      
-        if has_never_bought_category[shopper] == 1 and has_never_bought_brand[shopper] == 1:
-            has_never_bought_category_brand[shopper] = 1
-        else:
-            has_never_bought_category_brand[shopper] = 0   
-          
-
-        if has_never_bought_company[shopper] == 1 and has_never_bought_category[shopper] == 1 and has_never_bought_brand[shopper] == 1:
-            has_never_bought_company_category_brand[shopper] = 1
-        else:
-            has_never_bought_company_category_brand[shopper] = 0
-
     saveIt(has_bought_company_brand, 'has_bought_company_brand.txt')
     saveIt(has_bought_company_category, 'has_bought_company_category.txt')
     saveIt(has_bought_category_brand, 'has_bought_category_brand.txt')
     saveIt(has_bought_company_category_brand, 'has_bought_company_category_brand.txt')
+
+
+def computeFeaturesSecondPass():
+    '''
+    Compute 2 more features.
+    Create the first batch features.
+    Those features are quick to compute, because only 10 % of the transactions
+    are needed.
+
+    '''
     
-    saveIt(has_never_bought_company_brand, 'has_never_bought_company_brand.txt')
-    saveIt(has_never_bought_company_category, 'has_never_bought_company_category.txt')
-    saveIt(has_never_bought_category_brand, 'has_never_bought_category_brand.txt')
-    saveIt(has_never_bought_company_category_brand, 'has_never_bought_company_category_brand.txt')
+    readOffers()
+    readShoppers()
+    
+    ids = getIds('train') + getIds('test')
+    n = len(ids)
+    
+    total_n = dict(zip(ids, [0] * n))
+    total_a = dict(zip(ids, [0] * n))
+
+    transactionsSubsetFile = gzip.GzipFile('transactions.csv.gz', 'rU')
+    transactions = csv.reader(transactionsfile)
+    header = transactions.next()
+
+    IDIndex = header.index('id')
+    chainIndex = header.index('chain')
+    deptIndex = header.index('dept')
+    categoryIndex = header.index('category')
+    companyIndex = header.index('company')
+    brandIndex = header.index('brand')
+    dateIndex = header.index('date')
+    productsizeIndex = header.index('productsize')
+    measureIndex = header.index('productmeasure')
+    quantityIndex = header.index('purchasequantity')
+    amountIndex = header.index('purchaseamount')
+    
+    steps = 0
+    for row in transactions:
+
+        ID = row[IDIndex]
+        chain = row[chainIndex]
+        dept = row[deptIndex]
+        category = row[categoryIndex]
+        company = row[companyIndex]
+        brand = row[brandIndex]
+        date = row[dateIndex]
+        productsize = row[productsizeIndex]
+        measure = row[measureIndex]
+        quantity = float(row[quantityIndex])
+        amount = float(row[amountIndex])
+
+        total_n[ID] += 1
+        total_a[ID] += amount
+
+        N = 1000000
+        if steps % N == 0:
+            print >>sys.stderr, steps / N,
+        steps += 1
+
+    print >>sys.stderr
+
+    # Save the results in text files.
+    saveIt(total_n, 'total_n.txt')
+    saveIt(total_a, 'total_a.txt')
+
+
 
 def readTargets():
     target_of_shopper = {}
@@ -540,9 +528,8 @@ def normalizeFeatures(inputFolder, outputFolder):
 if __name__ == '__main__':
 
     # Uncomment to re-compute the features.
-    # computeFeaturesFirstPass()
+    computeFeaturesFirstPass()
     # computeFeaturesSecondPass()
-    # computeFeaturesThirdPass()
     
     # normalizeFeatures('features', 'normalizedFeatures')    
     # runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
@@ -550,6 +537,6 @@ if __name__ == '__main__':
     # runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
 
 
-    computeTransactionsSubset()
+    # computeTransactionsSubset()
 
 
