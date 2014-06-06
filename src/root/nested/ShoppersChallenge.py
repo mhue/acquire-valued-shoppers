@@ -1,5 +1,5 @@
 '''
-Created on Jun 4, 2014
+Created on Jun 5, 2014
 
 @author: philipp
 '''
@@ -9,10 +9,14 @@ from time import strftime
 from datetime import datetime
 from time import mktime
 from collections import defaultdict
+from sklearn.metrics import roc_auc_score
+import sklearn
 import csv
 import glob
 import subprocess
 import gzip
+import numpy
+
 
 company_of_offer = {}
 category_of_offer = {}
@@ -391,7 +395,7 @@ def readTargets():
     fid.close()
     return target_of_shopper
     
-def createTrainTestFiles(features, folder, library):
+def createFeatureFiles(ids, features, folder, library, phase):
 
     outputFolder = 'experiments' + '/' + library
     if not os.path.exists(outputFolder):
@@ -407,32 +411,32 @@ def createTrainTestFiles(features, folder, library):
         f[i] = loadIt(featuresFile, folder = folder)    
     
     # Write the features
-    for phase in ['train', 'test']:
 
-        ids = getIds(phase)
-        n = len(ids)
-        lines = []
-        for i in range(n):
-            target = '0'
-            if phase == 'train':
-                target = target_of_shopper[ids[i]]
-            if library == 'liblinear':
-                words = [str(target)]
-            if library == 'vowpalwabbit':
-                words = [str(target) + ' |']
-            for j in range(nf):
-                words.append(str(j+1) + ':' + f[j][ids[i]])
-            line = ' '.join(words)
-            lines.append(line)
-        fid = open(outputFolder + '/' + phase + '.txt', 'w')
-        fid.write('\n'.join(lines)+'\n')
-        fid.close()
+   
+    n = len(ids)
+    lines = []
+    for i in range(n):
+        target = '0'
+        if phase == 'train':
+            target = target_of_shopper[ids[i]]
+        if library == 'liblinear':
+            words = [str(target)]
+        if library == 'vowpalwabbit':
+            words = [str(target) + ' |']
+        for j in range(nf):
+            words.append(str(j+1) + ':' + f[j][ids[i]])
+        line = ' '.join(words)
+        lines.append(line)
+    fid = open(outputFolder + '/' + phase + '.txt', 'w')
+    fid.write('\n'.join(lines)+'\n')
+    fid.close()
 
-def parseLiblinearResults(resultsFile, submissionFile):
-    ids = getIds('test')
+def parseLiblinearResults(ids_test, resultsFile, submissionFile):
+    ids = ids_test
     n = len(ids)
     predictions = []
     lines = open(resultsFile).readlines()[1:]
+#     resultsFile.seek(0)
     header = 'id,repeatProbability'
     t = [header]
     for i in range(n):
@@ -441,11 +445,12 @@ def parseLiblinearResults(resultsFile, submissionFile):
     fid.write('\n'.join(t)+'\n')
     fid.close()
     
-def parsevowpalwabbitResults(resultsFile, submissionFile):
-    ids = getIds('test')
+def parsevowpalwabbitResults(ids_test, resultsFile, submissionFile):
+    ids = ids_test
     n = len(ids)
     predictions = []
     lines = open(resultsFile).readlines()
+    
     header = 'id,repeatProbability'
     t = [header]
     for i in range(n):
@@ -454,18 +459,13 @@ def parsevowpalwabbitResults(resultsFile, submissionFile):
     fid.write('\n'.join(t)+'\n')
     fid.close()
 
-def processResults(library, results, submissionFile):
+def processResults(ids, library, results, submissionFile):
     if library == 'liblinear':
-        parseLiblinearResults(results, submissionFile)
+        parseLiblinearResults(ids, results, submissionFile)
     if library == 'vowpalwabbit':
-        parsevowpalwabbitResults(results, submissionFile)
+        parsevowpalwabbitResults(ids, results, submissionFile)
 
-def runExperiments(library, folder, submissionFile, createTrainTest = True):
-
-    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-    features = [p.split('/')[-1][:-4] for p in featuresFiles]
-    if createTrainTest:
-        createTrainTestFiles(features, folder, library)
+def runExperiments(ids_train, ids_test, library):
     
     if library == 'liblinear':
 
@@ -495,6 +495,17 @@ def runExperiments(library, folder, submissionFile, createTrainTest = True):
             '-p ' + resultsFile
         print c
         subprocess.call(c, shell=True)
+        return resultsFile
+        
+def create_submission_file(library, folder, submissionFile, createTrainTest = True):
+    ids_train = getIds('train')
+    ids_test = getIds('test')
+    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+    features = [p.split('/')[-1][:-4] for p in featuresFiles]
+    if createTrainTest:
+        createFeatureFiles(ids_train, features, folder, library, 'train')
+        createFeatureFiles(ids_test, features, folder, library, 'test')
+    resultsFile = runExperiments(ids_train, ids_test, library)
     processResults(library, resultsFile, submissionFile)
 
 def normalizeFeatures(inputFolder, outputFolder):
@@ -525,19 +536,65 @@ def normalizeFeatures(inputFolder, outputFolder):
         fout = open(outputFolder + '/' + f + '.txt', 'w')
         fout.write('\n'.join(toWrite)+'\n')
         fout.close()
+        
+def cross_validation(ids_train, ids_test, library, folder, createTrainTest = True):
+    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+    features = [p.split('/')[-1][:-4] for p in featuresFiles]
+    if createTrainTest:
+        createFeatureFiles(ids_train, features, folder, library, 'train')
+        createFeatureFiles(ids_test, features, folder, library, 'test')
+    resultsFile = runExperiments(ids_train, ids_test, library)
+    processResults(ids_test, library, resultsFile, 'cross_validation' + '/' + library + '/results.csv.gz')
+    true_values = []
+    probabilities = []
+    targets = readTargets()
+    process_results_file = gzip.GzipFile('cross_validation' + '/' + library + '/results.csv.gz', 'r')
+    process_results = csv.reader(process_results_file)
+    header_process_results = process_results.next()
+    for row in process_results:
+        value = targets[row[0]]
+        true_values.append(int(value))
+        probabilities.append(float(row[1]))
+    true_values_array = numpy.asarray(true_values)
+    probabilities_array = numpy.asarray(probabilities)
     
+    return roc_auc_score(true_values_array, probabilities_array)
+        
+
+        
 
 if __name__ == '__main__':
+    
+    
+    ids_train = []
+    ids_test = []
+    train_history_file = file('trainHistory.csv', 'rU')
+    train_history = csv.reader(train_history_file)
+    header_train_history = train_history.next()
+    rownum = 0
+    for row in train_history:
+        if rownum < 80030:
+            ids_train.append(row[0])
+        else: ids_test.append(row[0])
+        rownum = rownum + 1
+    print cross_validation(ids_train, ids_test, 'vowpalwabbit', 'features', createTrainTest = True)
+        
+        
+
+    
+    
+    
+    
+    
+       
 
     # Uncomment to re-compute the features.
     # computeFeaturesFirstPass()
-    # computeFeaturesSecondPass()
-    # computeFeaturesThirdPass()
-    
-    # normalizeFeatures('features', 'normalizedFeatures')    
+#     computeFeaturesSecondPass()
+#     computeFeaturesThirdPass()
+#     
+#     normalizeFeatures('features', 'normalizedFeatures')    
 
-    runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
-    runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = False)
-
-
+#     runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = True)
+#     runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw-normalized.csv.gz', createTrainTest = True)
 
