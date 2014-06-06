@@ -176,7 +176,7 @@ def computeTransactionsSubset():
 
 def computeFeaturesFirstPass():
     '''
-    Create the 25 first  features.
+    Create the first 25 features.
     Those features are quick to compute, because only 10 % of the transactions
     are needed.
     '''
@@ -248,7 +248,7 @@ def computeFeaturesFirstPass():
                 
         if company_of_shopper[ID] == company:
             company_n[ID] += 1
-            company_a[ID] += amount
+            company_a[ID] += float(row[10])
             company_q[ID] += quantity
             if dt <= 30:
                 company_30[ID] += 1
@@ -258,7 +258,7 @@ def computeFeaturesFirstPass():
                 company_180[ID] += 1
         if category_of_shopper[ID] == category:
             category_n[ID] += 1
-            category_a[ID] += amount
+            category_a[ID] += float(row[10])
             category_q[ID] += quantity
             if dt <= 30:
                 category_30[ID] += 1
@@ -268,7 +268,7 @@ def computeFeaturesFirstPass():
                 category_180[ID] += 1
         if brand_of_shopper[ID] == brand:
             brand_n[ID] += 1
-            brand_a[ID] += amount
+            brand_a[ID] += float(row[10])
             brand_q[ID] += quantity
             if dt <= 30:
                 brand_30[ID] += 1
@@ -578,10 +578,15 @@ def testCrossValidation():
 if __name__ == '__main__':
     
     # Uncomment to re-compute the features.
+<<<<<<< HEAD
     computeTransactionsSubset()
     computeFeaturesFirstPass()
     computeFeaturesSecondPass()
 #    testCrossValidation()
+=======
+    # computeFeaturesFirstPass()
+    computeFeaturesSecondPass()
+>>>>>>> computefeatures
     
 
     # normalizeFeatures('features', 'normalizedFeatures')    
@@ -590,4 +595,9 @@ if __name__ == '__main__':
     # runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
 
 
+<<<<<<< HEAD
+=======
+    # computeTransactionsSubset()
+
+>>>>>>> computefeatures
 
