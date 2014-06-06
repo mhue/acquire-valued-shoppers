@@ -137,6 +137,9 @@ def computeTransactionsSubset():
     Only keep the rows with a known company, category or offer.
     '''
     
+    if os.path.exists('transactions_subset.csv.gz'):
+        return
+
     readOffers()
     
     companies = dict(zip(company_of_offer.values(), [0] * len(company_of_offer)))
