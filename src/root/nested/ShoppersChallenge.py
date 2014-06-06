@@ -196,24 +196,48 @@ def computeFeaturesFirstPass():
     company_30 = dict(zip(ids, [0] * n))
     company_60 = dict(zip(ids, [0] * n))
     company_180 = dict(zip(ids, [0] * n))
+    has_bought_company = dict(zip(ids, [0] * n))
     category_n = dict(zip(ids, [0] * n))
     category_a = dict(zip(ids, [0] * n))
     category_q = dict(zip(ids, [0] * n))
     category_30 = dict(zip(ids, [0] * n))
     category_60 = dict(zip(ids, [0] * n))
     category_180 = dict(zip(ids, [0] * n))
+    has_bought_category = dict(zip(ids, [0] * n))
     brand_n = dict(zip(ids, [0] * n))
     brand_a = dict(zip(ids, [0] * n))
     brand_q = dict(zip(ids, [0] * n))
     brand_30 = dict(zip(ids, [0] * n))
     brand_60 = dict(zip(ids, [0] * n))
     brand_180 = dict(zip(ids, [0] * n))
-    has_bought_company = dict(zip(ids, [0] * n))
-    has_bought_category = dict(zip(ids, [0] * n))
     has_bought_brand = dict(zip(ids, [0] * n))
+    company_brand_n = dict(zip(ids, [0] * n))
+    company_brand_a = dict(zip(ids, [0] * n))
+    company_brand_q = dict(zip(ids, [0] * n))
+    company_brand_30 = dict(zip(ids, [0] * n))
+    company_brand_60 = dict(zip(ids, [0] * n))
+    company_brand_180 = dict(zip(ids, [0] * n))
     has_bought_company_brand = dict(zip(ids, [0] * n))
+    company_category_n = dict(zip(ids, [0] * n))
+    company_category_a = dict(zip(ids, [0] * n))
+    company_category_q = dict(zip(ids, [0] * n))
+    company_category_30 = dict(zip(ids, [0] * n))
+    company_category_60 = dict(zip(ids, [0] * n))
+    company_category_180 = dict(zip(ids, [0] * n))
     has_bought_company_category = dict(zip(ids, [0] * n))
+    category_brand_n = dict(zip(ids, [0] * n))
+    category_brand_a = dict(zip(ids, [0] * n))
+    category_brand_q = dict(zip(ids, [0] * n))
+    category_brand_30 = dict(zip(ids, [0] * n))
+    category_brand_60 = dict(zip(ids, [0] * n))
+    category_brand_180 = dict(zip(ids, [0] * n))
     has_bought_category_brand = dict(zip(ids, [0] * n))
+    company_category_brand_n = dict(zip(ids, [0] * n))
+    company_category_brand_a = dict(zip(ids, [0] * n))
+    company_category_brand_q = dict(zip(ids, [0] * n))
+    company_category_brand_30 = dict(zip(ids, [0] * n))
+    company_category_brand_60 = dict(zip(ids, [0] * n))
+    company_category_brand_180 = dict(zip(ids, [0] * n))
     has_bought_company_category_brand = dict(zip(ids, [0] * n))
 
     fid = gzip.GzipFile('transactions_subset.csv.gz', 'rU')
@@ -279,6 +303,78 @@ def computeFeaturesFirstPass():
                 brand_60[ID] += 1
             if dt <= 180:
                 brand_180[ID] += 1
+        if company_of_shopper[ID] == company and brand_of_shopper[ID] == brand:
+            company_brand_n[ID] += 1
+            company_brand_a[ID] += amount
+            company_brand_q[ID] += quantity
+            if dt <= 30:
+                company_brand_30[ID] += 1
+            if dt <= 60:
+                company_brand_60[ID] += 1
+            if dt <= 180:
+                company_brand_180[ID] += 1
+        if company_of_shopper[ID] == company and category_of_shopper[ID] == category:
+            company_category_n[ID] += 1
+            company_category_a[ID] += amount
+            company_category_q[ID] += quantity
+            if dt <= 30:
+                company_category_30[ID] += 1
+            if dt <= 60:
+                company_category_60[ID] += 1
+            if dt <= 180:
+                company_category_180[ID] += 1
+        if category_of_shopper[ID] == category and brand_of_shopper[ID] == brand:
+            category_brand_n[ID] += 1
+            category_brand_a[ID] += amount
+            category_brand_q[ID] += quantity
+            if dt <= 30:
+                category_brand_30[ID] += 1
+            if dt <= 60:
+                category_brand_60[ID] += 1
+            if dt <= 180:
+                category_brand_180[ID] += 1
+        if company_of_shopper[ID] == company and category_of_shopper[ID] == category and brand_of_shopper[ID] == brand:
+            company_category_brand_n[ID] += 1
+            company_category_brand_a[ID] += amount
+            company_category_brand_q[ID] += quantity
+            if dt <= 30:
+                company_category_brand_30[ID] += 1
+            if dt <= 60:
+                company_category_brand_60[ID] += 1
+            if dt <= 180:
+                company_category_brand_180[ID] += 1
+                
+    for shopper in ids:
+        if company_n[shopper] > 0:
+            has_bought_company[shopper] = 1
+        else:
+            has_bought_company[shopper] = 0
+        if category_n[shopper] > 0:
+            has_bought_category[shopper] = 1
+        else:
+            has_bought_category[shopper] = 0
+        if brand_n[shopper] > 0:
+            has_bought_brand[shopper] = 1
+        else:
+            has_bought_brand[shopper] = 0
+        if company_brand_n[shopper] > 0:
+            has_bought_company_brand[shopper] = 1
+        else:
+            has_bought_company_brand[shopper] = 0
+        if company_category_n[shopper] > 0:
+            has_bought_company_category[shopper] = 1
+        else:
+            has_bought_company_category[shopper] = 0
+        if category_brand_n[shopper] > 0:
+            has_bought_category_brand[shopper] = 1
+        else:
+            has_bought_category_brand[shopper] = 0
+        if company_category_brand_n[shopper] > 0:
+            has_bought_company_category_brand[shopper] = 1
+        else:
+            has_bought_company_category_brand[shopper] = 0
+        
+        
 
         N = 1000000
         if steps % N == 0:
@@ -581,9 +677,9 @@ def testCrossValidation():
 if __name__ == '__main__':
     
     # Uncomment to re-compute the features.
-    computeTransactionsSubset()
-    computeFeaturesFirstPass()
-    computeFeaturesSecondPass()
+#     computeTransactionsSubset()
+#     computeFeaturesFirstPass()
+#     computeFeaturesSecondPass()
 #    testCrossValidation()
     
 
@@ -591,6 +687,11 @@ if __name__ == '__main__':
     # runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
     
     # runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
-
-
-
+    transactions_file = gzip.GzipFile('transactions.csv.gz', 'rU')
+    transactions = csv.reader(transactions_file)
+    rownum = 0
+    for row in transactions:
+        print row
+        if rownum == 100:
+            break
+        rownum = rownum + 1
