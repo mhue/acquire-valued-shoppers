@@ -323,6 +323,9 @@ def computeFeaturesFirstPass():
     company_category_brand_30 = dict(zip(ids, [0] * n))
     company_category_brand_60 = dict(zip(ids, [0] * n))
     company_category_brand_180 = dict(zip(ids, [0] * n))
+    
+    
+
 
     fid = gzip.GzipFile('transactions_subset.csv.gz', 'rU')
     transactions = csv.reader(fid)
@@ -604,6 +607,9 @@ def computeFeaturesFirstPass():
                 company_category_brand_60[ID] += 1
             if dt <= 180:
                 company_category_brand_180[ID] += 1
+                
+        
+        
 
         N = 1000000
         if steps % N == 0:
@@ -748,7 +754,7 @@ def computeFeaturesFirstPass():
     saveIt(company_category_brand_30, 'company_category_brand_30.txt')
     saveIt(company_category_brand_60, 'company_category_brand_60.txt')
     saveIt(company_category_brand_180, 'company_category_brand_180.txt')
-
+    
 
 def computeFeaturesSecondPass():
     '''
@@ -764,6 +770,11 @@ def computeFeaturesSecondPass():
     
     total_b = dict(zip(ids, [0] * n))
     total_n = dict(zip(ids, [0] * n))
+    total_d = dict(zip(ids, [0] * n))
+    days = dict(zip(ids, [set()]*n))
+    days_30 = dict(zip(ids, [set()]*n))
+    days_60 = dict(zip(ids, [set()]*n))
+    days_180 = dict(zip(ids, [set()]*n))
     total_a = dict(zip(ids, [0] * n))
     total_q = dict(zip(ids, [0] * n))
     total_qm_ = dict(zip(ids, [0] * n))
@@ -781,11 +792,22 @@ def computeFeaturesSecondPass():
     total_30 = dict(zip(ids, [0] * n))
     total_60 = dict(zip(ids, [0] * n))
     total_180 = dict(zip(ids, [0] * n))
-
+    total_d_30 = dict(zip(ids, [0] * n))
+    total_d_60 = dict(zip(ids, [0] * n))
+    total_d_180 = dict(zip(ids, [0] * n))
+    total_a_30 = dict(zip(ids, [0] * n))
+    total_a_60 = dict(zip(ids, [0] * n))
+    total_a_180 = dict(zip(ids, [0] * n))
+    total_q_30 = dict(zip(ids, [0] * n))
+    total_q_60 = dict(zip(ids, [0] * n))
+    total_q_180 = dict(zip(ids, [0] * n))
+    
+#     
+# 
     fid = gzip.GzipFile('transactions.csv.gz', 'rU')
     transactions = csv.reader(fid)
     header = transactions.next()
-
+ 
     IDIndex = header.index('id')
     chainIndex = header.index('chain')
     deptIndex = header.index('dept')
@@ -797,10 +819,10 @@ def computeFeaturesSecondPass():
     measureIndex = header.index('productmeasure')
     quantityIndex = header.index('purchasequantity')
     amountIndex = header.index('purchaseamount')
-    
+     
     steps = 0
     for row in transactions:
-
+ 
         ID = row[IDIndex]
         chain = row[chainIndex]
         dept = row[deptIndex]
@@ -812,10 +834,11 @@ def computeFeaturesSecondPass():
         measure = row[measureIndex]
         quantity = float(row[quantityIndex])
         amount = float(row[amountIndex])
-
+ 
         dt = time_between_dates(date, date_of_shopper[ID])
-
+ 
         total_b[ID] = 1
+         
         total_n[ID] += 1
         total_a[ID] += amount
         total_q[ID] += quantity
@@ -845,25 +868,55 @@ def computeFeaturesSecondPass():
             total_qm_YD[ID] += quantity
         if dt <= 30:
             total_30[ID] += 1
+            total_a_30[ID] += amount
+            total_q_30[ID] += quantity
+            if date not in days_30[ID]:
+                total_d_30[ID] += 1
+                days_30[ID].add(date)
         if dt <= 60:
             total_60[ID] += 1
+            total_a_60[ID] += amount
+            total_q_60[ID] += quantity
+            if date not in days_60[ID]:
+                total_d_60[ID] += 1
+                days_60[ID].add(date)
         if dt <= 180:
             total_180[ID] += 1
-
+            total_a_180[ID] += amount
+            total_q_180[ID] += quantity
+            if date not in days_180[ID]:
+                total_d_180[ID] += 1
+                days_180[ID].add(date)
+        if date not in days[ID]:
+            total_d[ID] += 1
+            days[ID].add(date)
+            
+ 
         N = 1000000
         if steps % N == 0:
             print >>sys.stderr, steps / N,
         steps += 1
-
+        
+    
 
     print >>sys.stderr
     fid.close()
 
-    # Save the results in text files.
+#     Save the results in text files.
     saveIt(total_b, 'total_b.txt')
-    saveIt(total_n, 'total_n.txt')
     saveIt(total_a, 'total_a.txt')
+    saveIt(total_a_30, 'total_a_30.txt')
+    saveIt(total_a_60, 'total_a_60.txt')
+    saveIt(total_a_180, 'total_a_180.txt')
+    saveIt(total_n, 'total_n.txt')
+    saveIt(total_d, 'total_d.txt')
+    saveIt(total_d_30, 'total_d_30.txt')
+    saveIt(total_d_60, 'total_d_60.txt')
+    saveIt(total_d_180, 'total_d_180.txt')
     saveIt(total_q, 'total_q.txt')
+    saveIt(total_q_30, 'total_q30.txt')
+    saveIt(total_q_60, 'total_q_60.txt')
+    saveIt(total_q_180, 'total_q_180.txt')
     saveIt(total_qm_, 'total_qm_.txt')
     saveIt(total_qm_1, 'total_qm_1.txt')
     saveIt(total_qm_CT, 'total_qm_CT.txt')
@@ -879,6 +932,150 @@ def computeFeaturesSecondPass():
     saveIt(total_30, 'total_30.txt')
     saveIt(total_60, 'total_60.txt')
     saveIt(total_180, 'total_180.txt')
+    
+    
+def computeFeaturesThirdPass():
+    readOffers()
+    readShoppers()
+    
+    ids = getIds('train') + getIds('test')
+    n = len(ids)
+    
+    offer_value = dict(zip(ids, [0] * n))
+    offer_quantity = dict(zip(ids, [0] * n))
+    total_n = dict(zip(ids, [0] * n))
+    total_30 = dict(zip(ids, [0] * n))
+    total_60 = dict(zip(ids, [0] * n))
+    total_180 = dict(zip(ids, [0] * n))
+    total_a_30 = dict(zip(ids, [0] * n))
+    total_a_60 = dict(zip(ids, [0] * n))
+    total_a_180 = dict(zip(ids, [0] * n))
+    total_a = dict(zip(ids, [0] * n))
+    total_q = dict(zip(ids, [0] * n))
+    total_q_30 = dict(zip(ids, [0] * n))
+    total_q_60 = dict(zip(ids, [0] * n))
+    total_q_180 = dict(zip(ids, [0] * n))
+    total_d = dict(zip(ids, [0] * n))
+    total_d_30 = dict(zip(ids, [0] * n))
+    total_d_60 = dict(zip(ids, [0] * n))
+    total_d_180 = dict(zip(ids, [0] * n))
+    average_transaction_a = dict(zip(ids, [0] * n))
+    average_transaction_a_30 = dict(zip(ids, [0] * n))
+    average_transaction_a_60 = dict(zip(ids, [0] * n))
+    average_transaction_a_180 = dict(zip(ids, [0] * n))
+    average_transaction_q = dict(zip(ids, [0] * n))
+    average_transaction_q_30 = dict(zip(ids, [0] * n))
+    average_transaction_q_60 = dict(zip(ids, [0] * n))
+    average_transaction_q_180 = dict(zip(ids, [0] * n))
+    average_day_a = dict(zip(ids, [0] * n))
+    average_day_a_30 = dict(zip(ids, [0] * n))
+    average_day_a_60 = dict(zip(ids, [0] * n))
+    average_day_a_180 = dict(zip(ids, [0] * n))
+    average_day_q = dict(zip(ids, [0] * n))
+    average_day_q_30 = dict(zip(ids, [0] * n))
+    average_day_q_60 = dict(zip(ids, [0] * n))
+    average_day_q_180 = dict(zip(ids, [0] * n))
+    
+    for shopper in ids:
+            offer_value[shopper] = offer_value_of_shopper[shopper]
+            offer_quantity[shopper] = offer_quantity_of_shopper[shopper]
+    
+    total_a_file = file('features/total_a.txt', 'r')
+    for row in total_a_file:
+        total_a[row.split()[0]] = float(row.split()[1])
+        
+    total_a_30_file = file('features/total_a_30.txt', 'r')
+    for row in total_a_30_file:
+        total_a_30[row.split()[0]] = float(row.split()[1])
+    
+    total_a_60_file = file('features/total_a_60.txt', 'r')
+    for row in total_a_60_file:
+        total_a_60[row.split()[0]] = float(row.split()[1])
+        
+    total_a_180_file = file('features/total_a_180.txt', 'r')
+    for row in total_a_180_file:
+        total_a_180[row.split()[0]] = float(row.split()[1])
+   
+    total_n_file = file('features/total_n.txt', 'r')
+    for row in total_n_file: 
+        total_n[row.split()[0]] = float(row.split()[1])
+        
+    total_q_file = file('features/total_q.txt', 'r')
+    for row in total_q_file: 
+        total_q[row.split()[0]] = float(row.split()[1])
+        
+    total_q_30_file = file('features/total_q_30.txt', 'r')
+    for row in total_q_30_file:
+        total_q_30[row.split()[0]] = float(row.split()[1])
+    
+    total_q_60_file = file('features/total_q_60.txt', 'r')
+    for row in total_q_60_file:
+        total_q_60[row.split()[0]] = float(row.split()[1])
+        
+    total_q_180_file = file('features/total_q_180.txt', 'r')
+    for row in total_q_180_file:
+        total_q_180[row.split()[0]] = float(row.split()[1])
+    
+    total_d_file = file('features/total_d.txt', 'r')
+    for row in total_d_file: 
+        total_d[row.split()[0]] = float(row.split()[1])
+        
+    total_d_30_file = file('features/total_d_30.txt', 'r')
+    for row in total_d_30_file:
+        total_d_30[row.split()[0]] = float(row.split()[1])
+    
+    total_d_60_file = file('features/total_d_60.txt', 'r')
+    for row in total_d_60_file:
+        total_d_60[row.split()[0]] = float(row.split()[1])
+        
+    total_d_180_file = file('features/total_d_180.txt', 'r')
+    for row in total_d_180_file:
+        total_d_180[row.split()[0]] = float(row.split()[1])
+    
+    for shopper in ids:
+        average_transaction_a[shopper] = total_a[shopper]/total_n[shopper]
+        average_transaction_a_30[shopper] = total_a_30[shopper]/total_30[shopper]
+        average_transaction_a_60[shopper] = total_a_60[shopper]/total_60[shopper]
+        average_transaction_a_180[shopper] = total_a_180[shopper]/total_180[shopper]
+        average_transaction_q[shopper] = total_q[shopper]/total_n[shopper]
+        average_transaction_q_30[shopper] = total_q_30[shopper]/total_30[shopper]
+        average_transaction_q_60[shopper] = total_q_60[shopper]/total_60[shopper]
+        average_transaction_q_180[shopper] = total_q_180[shopper]/total_180[shopper]
+        average_day_a[shopper] = total_a[shopper]/total_d[shopper]
+        average_day_a_30[shopper] = total_a_30[shopper]/total_d_30[shopper]
+        average_day_a_60[shopper] = total_a_60[shopper]/total_d_60[shopper]
+        average_day_a_180[shopper] = total_a_180[shopper]/total_d_180[shopper]
+        average_day_q[shopper] = total_q[shopper]/total_d[shopper]
+        average_day_q_30[shopper] = total_q_30[shopper]/total_d_30[shopper]
+        average_day_q_60[shopper] = total_q_60[shopper]/total_d_60[shopper]
+        average_day_q_180[shopper] = total_q_180[shopper]/total_d_180[shopper]
+        
+    
+        
+        
+    
+    saveIt(offer_value, 'offer_value.txt')
+    saveIt(offer_quantity, 'offer_quantity.txt')
+    saveIt(average_transaction_a, 'average_transaction_a.txt')
+    saveIt(average_transaction_a_30, 'average_transaction_a_30.txt')
+    saveIt(average_transaction_a_60, 'average_transaction_a_60.txt')
+    saveIt(average_transaction_a_180, 'average_transaction_a_180.txt')
+    saveIt(average_transaction_q, 'average_transaction_q.txt')
+    saveIt(average_transaction_q_30, 'average_transaction_q_30.txt')
+    saveIt(average_transaction_q_60, 'average_transaction_q_60.txt')
+    saveIt(average_transaction_q_180, 'average_transaction_q_180.txt')
+    saveIt(average_day_a, 'average_day_a.txt')
+    saveIt(average_day_a_30, 'average_day_a_30.txt')
+    saveIt(average_day_a_60, 'average_day_a_60.txt')
+    saveIt(average_day_a_180, 'average_day_a_180.txt')
+    saveIt(average_day_q, 'average_day_q.txt')
+    saveIt(average_day_q_30, 'average_day_q_30.txt')
+    saveIt(average_day_q_60, 'average_day_q_60.txt')
+    saveIt(average_day_q_180, 'average_day_q_180.txt')
+        
+
+        
+#     
 
 
 
@@ -1082,8 +1279,9 @@ if __name__ == '__main__':
     
     # Uncomment to re-compute the features.
 #     computeTransactionsSubset()
-     computeFeaturesFirstPass()
-     computeFeaturesSecondPass()
+#      computeFeaturesFirstPass()
+#     computeFeaturesSecondPass()
+#     computeFeaturesThirdPass()
 #    testCrossValidation()
     
 
@@ -1091,6 +1289,5 @@ if __name__ == '__main__':
     # runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
     
     # runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
-
-
-
+    
+    testCrossValidation()
