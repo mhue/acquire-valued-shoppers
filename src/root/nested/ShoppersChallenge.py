@@ -179,7 +179,7 @@ def computeTransactionsSubset():
 
 def computeFeaturesFirstPass():
     '''
-    Create the 25 first  features.
+    Create the first features.
     Those features are quick to compute, because only 10 % of the transactions
     are needed.
     '''
@@ -190,6 +190,7 @@ def computeFeaturesFirstPass():
     ids = getIds('train') + getIds('test')
     n = len(ids)
     
+    company_b = dict(zip(ids, [0] * n))
     company_n = dict(zip(ids, [0] * n))
     company_a = dict(zip(ids, [0] * n))
     company_q = dict(zip(ids, [0] * n))
@@ -208,7 +209,7 @@ def computeFeaturesFirstPass():
     company_30 = dict(zip(ids, [0] * n))
     company_60 = dict(zip(ids, [0] * n))
     company_180 = dict(zip(ids, [0] * n))
-    has_bought_company = dict(zip(ids, [0] * n))
+    category_b = dict(zip(ids, [0] * n))
     category_n = dict(zip(ids, [0] * n))
     category_a = dict(zip(ids, [0] * n))
     category_q = dict(zip(ids, [0] * n))
@@ -227,7 +228,7 @@ def computeFeaturesFirstPass():
     category_30 = dict(zip(ids, [0] * n))
     category_60 = dict(zip(ids, [0] * n))
     category_180 = dict(zip(ids, [0] * n))
-    has_bought_category = dict(zip(ids, [0] * n))
+    brand_b = dict(zip(ids, [0] * n))
     brand_n = dict(zip(ids, [0] * n))
     brand_a = dict(zip(ids, [0] * n))
     brand_q = dict(zip(ids, [0] * n))
@@ -246,35 +247,82 @@ def computeFeaturesFirstPass():
     brand_30 = dict(zip(ids, [0] * n))
     brand_60 = dict(zip(ids, [0] * n))
     brand_180 = dict(zip(ids, [0] * n))
-    has_bought_brand = dict(zip(ids, [0] * n))
+    company_brand_b = dict(zip(ids, [0] * n))
     company_brand_n = dict(zip(ids, [0] * n))
     company_brand_a = dict(zip(ids, [0] * n))
     company_brand_q = dict(zip(ids, [0] * n))
+    company_brand_qm_ = dict(zip(ids, [0] * n))
+    company_brand_qm_1 = dict(zip(ids, [0] * n))
+    company_brand_qm_CT = dict(zip(ids, [0] * n))
+    company_brand_qm_FT = dict(zip(ids, [0] * n))
+    company_brand_qm_GL = dict(zip(ids, [0] * n))
+    company_brand_qm_LB = dict(zip(ids, [0] * n))
+    company_brand_qm_LT = dict(zip(ids, [0] * n))
+    company_brand_qm_OZ = dict(zip(ids, [0] * n))
+    company_brand_qm_PT = dict(zip(ids, [0] * n))
+    company_brand_qm_QT = dict(zip(ids, [0] * n))
+    company_brand_qm_RL = dict(zip(ids, [0] * n))
+    company_brand_qm_YD = dict(zip(ids, [0] * n))
     company_brand_30 = dict(zip(ids, [0] * n))
     company_brand_60 = dict(zip(ids, [0] * n))
     company_brand_180 = dict(zip(ids, [0] * n))
-    has_bought_company_brand = dict(zip(ids, [0] * n))
+    company_category_b = dict(zip(ids, [0] * n))
     company_category_n = dict(zip(ids, [0] * n))
     company_category_a = dict(zip(ids, [0] * n))
     company_category_q = dict(zip(ids, [0] * n))
+    company_category_qm_ = dict(zip(ids, [0] * n))
+    company_category_qm_1 = dict(zip(ids, [0] * n))
+    company_category_qm_CT = dict(zip(ids, [0] * n))
+    company_category_qm_FT = dict(zip(ids, [0] * n))
+    company_category_qm_GL = dict(zip(ids, [0] * n))
+    company_category_qm_LB = dict(zip(ids, [0] * n))
+    company_category_qm_LT = dict(zip(ids, [0] * n))
+    company_category_qm_OZ = dict(zip(ids, [0] * n))
+    company_category_qm_PT = dict(zip(ids, [0] * n))
+    company_category_qm_QT = dict(zip(ids, [0] * n))
+    company_category_qm_RL = dict(zip(ids, [0] * n))
+    company_category_qm_YD = dict(zip(ids, [0] * n))
     company_category_30 = dict(zip(ids, [0] * n))
     company_category_60 = dict(zip(ids, [0] * n))
     company_category_180 = dict(zip(ids, [0] * n))
-    has_bought_company_category = dict(zip(ids, [0] * n))
+    category_brand_b = dict(zip(ids, [0] * n))
     category_brand_n = dict(zip(ids, [0] * n))
     category_brand_a = dict(zip(ids, [0] * n))
     category_brand_q = dict(zip(ids, [0] * n))
+    category_brand_qm_ = dict(zip(ids, [0] * n))
+    category_brand_qm_1 = dict(zip(ids, [0] * n))
+    category_brand_qm_CT = dict(zip(ids, [0] * n))
+    category_brand_qm_FT = dict(zip(ids, [0] * n))
+    category_brand_qm_GL = dict(zip(ids, [0] * n))
+    category_brand_qm_LB = dict(zip(ids, [0] * n))
+    category_brand_qm_LT = dict(zip(ids, [0] * n))
+    category_brand_qm_OZ = dict(zip(ids, [0] * n))
+    category_brand_qm_PT = dict(zip(ids, [0] * n))
+    category_brand_qm_QT = dict(zip(ids, [0] * n))
+    category_brand_qm_RL = dict(zip(ids, [0] * n))
+    category_brand_qm_YD = dict(zip(ids, [0] * n))
     category_brand_30 = dict(zip(ids, [0] * n))
     category_brand_60 = dict(zip(ids, [0] * n))
     category_brand_180 = dict(zip(ids, [0] * n))
-    has_bought_category_brand = dict(zip(ids, [0] * n))
+    company_category_brand_b = dict(zip(ids, [0] * n))
     company_category_brand_n = dict(zip(ids, [0] * n))
     company_category_brand_a = dict(zip(ids, [0] * n))
     company_category_brand_q = dict(zip(ids, [0] * n))
+    company_category_brand_qm_ = dict(zip(ids, [0] * n))
+    company_category_brand_qm_1 = dict(zip(ids, [0] * n))
+    company_category_brand_qm_CT = dict(zip(ids, [0] * n))
+    company_category_brand_qm_FT = dict(zip(ids, [0] * n))
+    company_category_brand_qm_GL = dict(zip(ids, [0] * n))
+    company_category_brand_qm_LB = dict(zip(ids, [0] * n))
+    company_category_brand_qm_LT = dict(zip(ids, [0] * n))
+    company_category_brand_qm_OZ = dict(zip(ids, [0] * n))
+    company_category_brand_qm_PT = dict(zip(ids, [0] * n))
+    company_category_brand_qm_QT = dict(zip(ids, [0] * n))
+    company_category_brand_qm_RL = dict(zip(ids, [0] * n))
+    company_category_brand_qm_YD = dict(zip(ids, [0] * n))
     company_category_brand_30 = dict(zip(ids, [0] * n))
     company_category_brand_60 = dict(zip(ids, [0] * n))
     company_category_brand_180 = dict(zip(ids, [0] * n))
-    has_bought_company_category_brand = dict(zip(ids, [0] * n))
 
     fid = gzip.GzipFile('transactions_subset.csv.gz', 'rU')
     transactions = csv.reader(fid)
@@ -310,6 +358,7 @@ def computeFeaturesFirstPass():
         dt = time_between_dates(date, date_of_shopper[ID])
                 
         if company_of_shopper[ID] == company:
+            company_b[ID] = 1
             company_n[ID] += 1
             company_a[ID] += amount
             company_q[ID] += quantity
@@ -344,6 +393,7 @@ def computeFeaturesFirstPass():
             if dt <= 180:
                 company_180[ID] += 1
         if category_of_shopper[ID] == category:
+            category_b[ID] = 1
             category_n[ID] += 1
             category_a[ID] += amount
             category_q[ID] += quantity
@@ -378,6 +428,7 @@ def computeFeaturesFirstPass():
             if dt <= 180:
                 category_180[ID] += 1
         if brand_of_shopper[ID] == brand:
+            brand_b[ID] = 1
             brand_n[ID] += 1
             brand_a[ID] += amount
             brand_q[ID] += quantity
@@ -412,9 +463,35 @@ def computeFeaturesFirstPass():
             if dt <= 180:
                 brand_180[ID] += 1
         if company_of_shopper[ID] == company and brand_of_shopper[ID] == brand:
+            company_brand_b[ID] = 1
             company_brand_n[ID] += 1
             company_brand_a[ID] += amount
             company_brand_q[ID] += quantity
+            if measure == '':
+                company_brand_qm_[ID] += quantity
+            if measure == '1':
+                company_brand_qm_1[ID] += quantity
+            if measure == 'CT':
+                company_brand_qm_CT[ID] += quantity
+            if measure == 'FT':
+                company_brand_qm_FT[ID] += quantity
+            if measure == 'GL':
+                company_brand_qm_GL[ID] += quantity
+            if measure == 'LB':
+                company_brand_qm_LB[ID] += quantity
+            if measure == 'LT':
+                company_brand_qm_LT[ID] += quantity
+            if measure == 'OZ':
+                company_brand_qm_OZ[ID] += quantity
+            if measure == 'PT':
+                company_brand_qm_PT[ID] += quantity
+            if measure == 'QT':
+                company_brand_qm_QT[ID] += quantity
+            if measure == 'RL':
+                company_brand_qm_RL[ID] += quantity
+            if measure == 'YD':
+                company_brand_qm_YD[ID] += quantity
+
             if dt <= 30:
                 company_brand_30[ID] += 1
             if dt <= 60:
@@ -422,9 +499,35 @@ def computeFeaturesFirstPass():
             if dt <= 180:
                 company_brand_180[ID] += 1
         if company_of_shopper[ID] == company and category_of_shopper[ID] == category:
+            company_category_b[ID] = 1
             company_category_n[ID] += 1
             company_category_a[ID] += amount
             company_category_q[ID] += quantity
+            if measure == '':
+                company_category_qm_[ID] += quantity
+            if measure == '1':
+                company_category_qm_1[ID] += quantity
+            if measure == 'CT':
+                company_category_qm_CT[ID] += quantity
+            if measure == 'FT':
+                company_category_qm_FT[ID] += quantity
+            if measure == 'GL':
+                company_category_qm_GL[ID] += quantity
+            if measure == 'LB':
+                company_category_qm_LB[ID] += quantity
+            if measure == 'LT':
+                company_category_qm_LT[ID] += quantity
+            if measure == 'OZ':
+                company_category_qm_OZ[ID] += quantity
+            if measure == 'PT':
+                company_category_qm_PT[ID] += quantity
+            if measure == 'QT':
+                company_category_qm_QT[ID] += quantity
+            if measure == 'RL':
+                company_category_qm_RL[ID] += quantity
+            if measure == 'YD':
+                company_category_qm_YD[ID] += quantity
+
             if dt <= 30:
                 company_category_30[ID] += 1
             if dt <= 60:
@@ -432,9 +535,34 @@ def computeFeaturesFirstPass():
             if dt <= 180:
                 company_category_180[ID] += 1
         if category_of_shopper[ID] == category and brand_of_shopper[ID] == brand:
+            category_brand_b[ID] = 1
             category_brand_n[ID] += 1
             category_brand_a[ID] += amount
             category_brand_q[ID] += quantity
+            if measure == '':
+                category_brand_qm_[ID] += quantity
+            if measure == '1':
+                category_brand_qm_1[ID] += quantity
+            if measure == 'CT':
+                category_brand_qm_CT[ID] += quantity
+            if measure == 'FT':
+                category_brand_qm_FT[ID] += quantity
+            if measure == 'GL':
+                category_brand_qm_GL[ID] += quantity
+            if measure == 'LB':
+                category_brand_qm_LB[ID] += quantity
+            if measure == 'LT':
+                category_brand_qm_LT[ID] += quantity
+            if measure == 'OZ':
+                category_brand_qm_OZ[ID] += quantity
+            if measure == 'PT':
+                category_brand_qm_PT[ID] += quantity
+            if measure == 'QT':
+                category_brand_qm_QT[ID] += quantity
+            if measure == 'RL':
+                category_brand_qm_RL[ID] += quantity
+            if measure == 'YD':
+                category_brand_qm_YD[ID] += quantity
             if dt <= 30:
                 category_brand_30[ID] += 1
             if dt <= 60:
@@ -442,58 +570,52 @@ def computeFeaturesFirstPass():
             if dt <= 180:
                 category_brand_180[ID] += 1
         if company_of_shopper[ID] == company and category_of_shopper[ID] == category and brand_of_shopper[ID] == brand:
+            company_category_brand_b[ID] = 1
             company_category_brand_n[ID] += 1
             company_category_brand_a[ID] += amount
             company_category_brand_q[ID] += quantity
+            if measure == '':
+                company_category_brand_qm_[ID] += quantity
+            if measure == '1':
+                company_category_brand_qm_1[ID] += quantity
+            if measure == 'CT':
+                company_category_brand_qm_CT[ID] += quantity
+            if measure == 'FT':
+                company_category_brand_qm_FT[ID] += quantity
+            if measure == 'GL':
+                company_category_brand_qm_GL[ID] += quantity
+            if measure == 'LB':
+                company_category_brand_qm_LB[ID] += quantity
+            if measure == 'LT':
+                company_category_brand_qm_LT[ID] += quantity
+            if measure == 'OZ':
+                company_category_brand_qm_OZ[ID] += quantity
+            if measure == 'PT':
+                company_category_brand_qm_PT[ID] += quantity
+            if measure == 'QT':
+                company_category_brand_qm_QT[ID] += quantity
+            if measure == 'RL':
+                company_category_brand_qm_RL[ID] += quantity
+            if measure == 'YD':
+                company_category_brand_qm_YD[ID] += quantity
             if dt <= 30:
                 company_category_brand_30[ID] += 1
             if dt <= 60:
                 company_category_brand_60[ID] += 1
             if dt <= 180:
                 company_category_brand_180[ID] += 1
-                
-    for shopper in ids:
-        if company_n[shopper] > 0:
-            has_bought_company[shopper] = 1
-        else:
-            has_bought_company[shopper] = 0
-        if category_n[shopper] > 0:
-            has_bought_category[shopper] = 1
-        else:
-            has_bought_category[shopper] = 0
-        if brand_n[shopper] > 0:
-            has_bought_brand[shopper] = 1
-        else:
-            has_bought_brand[shopper] = 0
-        if company_brand_n[shopper] > 0:
-            has_bought_company_brand[shopper] = 1
-        else:
-            has_bought_company_brand[shopper] = 0
-        if company_category_n[shopper] > 0:
-            has_bought_company_category[shopper] = 1
-        else:
-            has_bought_company_category[shopper] = 0
-        if category_brand_n[shopper] > 0:
-            has_bought_category_brand[shopper] = 1
-        else:
-            has_bought_category_brand[shopper] = 0
-        if company_category_brand_n[shopper] > 0:
-            has_bought_company_category_brand[shopper] = 1
-        else:
-            has_bought_company_category_brand[shopper] = 0
-        
-        
 
         N = 1000000
         if steps % N == 0:
             print >>sys.stderr, steps / N,
         steps += 1
+        
 
     fid.close()
     print >>sys.stderr
 
-
     # Save the results in text files.
+    saveIt(company_b, 'company_b.txt')
     saveIt(company_n, 'company_n.txt')
     saveIt(company_a, 'company_a.txt')
     saveIt(company_q, 'company_q.txt')
@@ -512,6 +634,7 @@ def computeFeaturesFirstPass():
     saveIt(company_30, 'company_30.txt')
     saveIt(company_60, 'company_60.txt')
     saveIt(company_180, 'company_180.txt')
+    saveIt(category_b, 'category_b.txt')
     saveIt(category_n, 'category_n.txt')
     saveIt(category_a, 'category_a.txt')
     saveIt(category_q, 'category_q.txt')
@@ -530,6 +653,7 @@ def computeFeaturesFirstPass():
     saveIt(category_30, 'category_30.txt')
     saveIt(category_60, 'category_60.txt')
     saveIt(category_180, 'category_180.txt')
+    saveIt(brand_b, 'brand_b.txt')
     saveIt(brand_n, 'brand_n.txt')
     saveIt(brand_a, 'brand_a.txt')
     saveIt(brand_q, 'brand_q.txt')
@@ -548,21 +672,87 @@ def computeFeaturesFirstPass():
     saveIt(brand_30, 'brand_30.txt')
     saveIt(brand_60, 'brand_60.txt')
     saveIt(brand_180, 'brand_180.txt')
-    saveIt(has_bought_company, 'has_bought_company.txt')
-    saveIt(has_bought_category, 'has_bought_category.txt')
-    saveIt(has_bought_brand, 'has_bought_brand.txt')
-    saveIt(has_bought_company_brand, 'has_bought_company_brand.txt')
-    saveIt(has_bought_company_category, 'has_bought_company_category.txt')
-    saveIt(has_bought_category_brand, 'has_bought_category_brand.txt')
-    saveIt(has_bought_company_category_brand, 'has_bought_company_category_brand.txt')
+    saveIt(company_brand_b, 'company_brand_b.txt')
+    saveIt(company_brand_n, 'company_brand_n.txt')
+    saveIt(company_brand_a, 'company_brand_a.txt')
+    saveIt(company_brand_q, 'company_brand_q.txt')
+    saveIt(company_brand_qm_, 'company_brand_qm_.txt')
+    saveIt(company_brand_qm_1, 'company_brand_qm_1.txt')
+    saveIt(company_brand_qm_CT, 'company_brand_qm_CT.txt')
+    saveIt(company_brand_qm_FT, 'company_brand_qm_FT.txt')
+    saveIt(company_brand_qm_GL, 'company_brand_qm_GL.txt')
+    saveIt(company_brand_qm_LB, 'company_brand_qm_LB.txt')
+    saveIt(company_brand_qm_LT, 'company_brand_qm_LT.txt')
+    saveIt(company_brand_qm_OZ, 'company_brand_qm_OZ.txt')
+    saveIt(company_brand_qm_PT, 'company_brand_qm_PT.txt')
+    saveIt(company_brand_qm_QT, 'company_brand_qm_QT.txt')
+    saveIt(company_brand_qm_RL, 'company_brand_qm_RL.txt')
+    saveIt(company_brand_qm_YD, 'company_brand_qm_YD.txt')
+    saveIt(company_brand_30, 'company_brand_30.txt')
+    saveIt(company_brand_60, 'company_brand_60.txt')
+    saveIt(company_brand_180, 'company_brand_180.txt')
+    saveIt(company_category_b, 'company_category_b.txt')
+    saveIt(company_category_n, 'company_category_n.txt')
+    saveIt(company_category_a, 'company_category_a.txt')
+    saveIt(company_category_q, 'company_category_q.txt')
+    saveIt(company_category_qm_, 'company_category_qm_.txt')
+    saveIt(company_category_qm_1, 'company_category_qm_1.txt')
+    saveIt(company_category_qm_CT, 'company_category_qm_CT.txt')
+    saveIt(company_category_qm_FT, 'company_category_qm_FT.txt')
+    saveIt(company_category_qm_GL, 'company_category_qm_GL.txt')
+    saveIt(company_category_qm_LB, 'company_category_qm_LB.txt')
+    saveIt(company_category_qm_LT, 'company_category_qm_LT.txt')
+    saveIt(company_category_qm_OZ, 'company_category_qm_OZ.txt')
+    saveIt(company_category_qm_PT, 'company_category_qm_PT.txt')
+    saveIt(company_category_qm_QT, 'company_category_qm_QT.txt')
+    saveIt(company_category_qm_RL, 'company_category_qm_RL.txt')
+    saveIt(company_category_qm_YD, 'company_category_qm_YD.txt')
+    saveIt(company_category_30, 'company_category_30.txt')
+    saveIt(company_category_60, 'company_category_60.txt')
+    saveIt(company_category_180, 'company_category_180.txt')
+    saveIt(category_brand_b, 'category_brand_b.txt')
+    saveIt(category_brand_n, 'category_brand_n.txt')
+    saveIt(category_brand_a, 'category_brand_a.txt')
+    saveIt(category_brand_q, 'category_brand_q.txt')
+    saveIt(category_brand_qm_, 'category_brand_qm_.txt')
+    saveIt(category_brand_qm_1, 'category_brand_qm_1.txt')
+    saveIt(category_brand_qm_CT, 'category_brand_qm_CT.txt')
+    saveIt(category_brand_qm_FT, 'category_brand_qm_FT.txt')
+    saveIt(category_brand_qm_GL, 'category_brand_qm_GL.txt')
+    saveIt(category_brand_qm_LB, 'category_brand_qm_LB.txt')
+    saveIt(category_brand_qm_LT, 'category_brand_qm_LT.txt')
+    saveIt(category_brand_qm_OZ, 'category_brand_qm_OZ.txt')
+    saveIt(category_brand_qm_PT, 'category_brand_qm_PT.txt')
+    saveIt(category_brand_qm_QT, 'category_brand_qm_QT.txt')
+    saveIt(category_brand_qm_RL, 'category_brand_qm_RL.txt')
+    saveIt(category_brand_qm_YD, 'category_brand_qm_YD.txt')
+    saveIt(category_brand_30, 'category_brand_30.txt')
+    saveIt(category_brand_60, 'category_brand_60.txt')
+    saveIt(category_brand_180, 'category_brand_180.txt')
+    saveIt(company_category_brand_b, 'company_category_brand_b.txt')
+    saveIt(company_category_brand_n, 'company_category_brand_n.txt')
+    saveIt(company_category_brand_a, 'company_category_brand_a.txt')
+    saveIt(company_category_brand_q, 'company_category_brand_q.txt')
+    saveIt(company_category_brand_qm_, 'company_category_brand_qm_.txt')
+    saveIt(company_category_brand_qm_1, 'company_category_brand_qm_1.txt')
+    saveIt(company_category_brand_qm_CT, 'company_category_brand_qm_CT.txt')
+    saveIt(company_category_brand_qm_FT, 'company_category_brand_qm_FT.txt')
+    saveIt(company_category_brand_qm_GL, 'company_category_brand_qm_GL.txt')
+    saveIt(company_category_brand_qm_LB, 'company_category_brand_qm_LB.txt')
+    saveIt(company_category_brand_qm_LT, 'company_category_brand_qm_LT.txt')
+    saveIt(company_category_brand_qm_OZ, 'company_category_brand_qm_OZ.txt')
+    saveIt(company_category_brand_qm_PT, 'company_category_brand_qm_PT.txt')
+    saveIt(company_category_brand_qm_QT, 'company_category_brand_qm_QT.txt')
+    saveIt(company_category_brand_qm_RL, 'company_category_brand_qm_RL.txt')
+    saveIt(company_category_brand_qm_YD, 'company_category_brand_qm_YD.txt')
+    saveIt(company_category_brand_30, 'company_category_brand_30.txt')
+    saveIt(company_category_brand_60, 'company_category_brand_60.txt')
+    saveIt(company_category_brand_180, 'company_category_brand_180.txt')
 
 
 def computeFeaturesSecondPass():
     '''
-    Compute 2 more features.
-    Create the first batch features.
-    Those features are quick to compute, because only 10 % of the transactions
-    are needed.
+    Those features are slower to compute, because all of the transactions are read.
 
     '''
     
@@ -572,6 +762,7 @@ def computeFeaturesSecondPass():
     ids = getIds('train') + getIds('test')
     n = len(ids)
     
+    total_b = dict(zip(ids, [0] * n))
     total_n = dict(zip(ids, [0] * n))
     total_a = dict(zip(ids, [0] * n))
     total_q = dict(zip(ids, [0] * n))
@@ -587,6 +778,9 @@ def computeFeaturesSecondPass():
     total_qm_QT = dict(zip(ids, [0] * n))
     total_qm_RL = dict(zip(ids, [0] * n))
     total_qm_YD = dict(zip(ids, [0] * n))
+    total_30 = dict(zip(ids, [0] * n))
+    total_60 = dict(zip(ids, [0] * n))
+    total_180 = dict(zip(ids, [0] * n))
 
     fid = gzip.GzipFile('transactions.csv.gz', 'rU')
     transactions = csv.reader(fid)
@@ -619,6 +813,9 @@ def computeFeaturesSecondPass():
         quantity = float(row[quantityIndex])
         amount = float(row[amountIndex])
 
+        dt = time_between_dates(date, date_of_shopper[ID])
+
+        total_b[ID] = 1
         total_n[ID] += 1
         total_a[ID] += amount
         total_q[ID] += quantity
@@ -646,6 +843,12 @@ def computeFeaturesSecondPass():
             total_qm_RL[ID] += quantity
         if measure == 'YD':
             total_qm_YD[ID] += quantity
+        if dt <= 30:
+            total_30[ID] += 1
+        if dt <= 60:
+            total_60[ID] += 1
+        if dt <= 180:
+            total_180[ID] += 1
 
         N = 1000000
         if steps % N == 0:
@@ -653,11 +856,11 @@ def computeFeaturesSecondPass():
         steps += 1
 
 
-
     print >>sys.stderr
     fid.close()
 
     # Save the results in text files.
+    saveIt(total_b, 'total_b.txt')
     saveIt(total_n, 'total_n.txt')
     saveIt(total_a, 'total_a.txt')
     saveIt(total_q, 'total_q.txt')
@@ -673,6 +876,9 @@ def computeFeaturesSecondPass():
     saveIt(total_qm_QT, 'total_qm_QT.txt')
     saveIt(total_qm_RL, 'total_qm_RL.txt')
     saveIt(total_qm_YD, 'total_qm_YD.txt')
+    saveIt(total_30, 'total_30.txt')
+    saveIt(total_60, 'total_60.txt')
+    saveIt(total_180, 'total_180.txt')
 
 
 
@@ -876,8 +1082,8 @@ if __name__ == '__main__':
     
     # Uncomment to re-compute the features.
 #     computeTransactionsSubset()
-#     computeFeaturesFirstPass()
-#     computeFeaturesSecondPass()
+     computeFeaturesFirstPass()
+     computeFeaturesSecondPass()
 #    testCrossValidation()
     
 
