@@ -904,16 +904,26 @@ def createFeatureFiles(ids, features, folder, library, phase):
         os.makedirs(outputFolder)
     target_of_shopper = readTargets()
     nf = len(features)
-    f = [{} for i in range(nf)]
     
-    # Load the dictionaries
+    if not os.path.exists(folder + '/' + phase):
+        os.makedirs(folder + '/' + phase)
+    ids = getIds(phase)
+    # Load each dictionary
     for i in range(nf):
         
         featuresFile = features[i] +'.txt'
-        f[i] = loadIt(featuresFile, folder = folder)    
+        print i, 'reading', featuresFile    
+        f = loadIt(featuresFile, folder = folder)    
+        toWrite = []
+        for id in ids:
+            toWrite.append(f[id])
+        out = open(folder + '/' + phase +'/' + features[i] + '.txt', 'w')
+        out.write('\n'.join(toWrite) + '\n')
+        out.close()
     
     # Write the features
-
+    fileids = [open(folder + '/' + phase +'/' + features[i] + '.txt') for i in range(nf)]
+    
    
     n = len(ids)
     lines = []
@@ -926,9 +936,17 @@ def createFeatureFiles(ids, features, folder, library, phase):
         if library == 'vowpalwabbit':
             words = [str(target) + ' |']
         for j in range(nf):
-            words.append(str(j+1) + ':' + f[j][ids[i]])
+            value = fileids[j].readline().strip()
+            if value == '0':
+                continue
+            else:
+                words.append(str(j+1) + ':' + value)
         line = ' '.join(words)
         lines.append(line)
+
+    for j in range(nf):
+        fileids[j].close()
+
     fid = open(outputFolder + '/' + phase + '.txt', 'w')
     fid.write('\n'.join(lines)+'\n')
     fid.close()
@@ -938,7 +956,6 @@ def parseLiblinearResults(ids_test, resultsFile, submissionFile):
     n = len(ids)
     predictions = []
     lines = open(resultsFile).readlines()[1:]
-#     resultsFile.seek(0)
     header = 'id,repeatProbability'
     t = [header]
     for i in range(n):
@@ -976,13 +993,18 @@ def runExperiments(ids_train, ids_test, library):
         testFile = 'experiments/%s/test.txt' % library
         resultsFile = 'experiments/%s/out.txt'% library
 
-        c = 'liblinear-train -s 0 -w0 43438 -w1 116619 -B 1 ' + \
-            trainFile + ' ' + modelFile + \
-            '&& liblinear-predict -b 1 ' + \
-            testFile + ' ' + \
-            modelFile + ' ' + \
-            resultsFile
-        subprocess.call(c, shell=True)
+        c = ['liblinear-train', '-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1',
+            trainFile, modelFile ] 
+        c2 = ['liblinear-predict', '-b', '1',
+            testFile,
+            modelFile,
+            resultsFile ]
+
+        # Race condition? It seems c2 is launched before c1 is done:
+        # "TypeError: coercing to Unicode: need string or buffer, NoneType found"
+        ret_code = subprocess.call(c)
+
+        subprocess.call(c2)
 
     if library == 'vowpalwabbit':
         
@@ -1008,7 +1030,31 @@ def create_submission_file(library, folder, submissionFile, createTrainTest = Tr
         createFeatureFiles(ids_train, features, folder, library, 'train')
         createFeatureFiles(ids_test, features, folder, library, 'test')
     resultsFile = runExperiments(ids_train, ids_test, library)
-    processResults(library, resultsFile, submissionFile)
+    processResults(ids_test, library, resultsFile, submissionFile)
+
+def detectConstantFeatures(folder, clean=True):
+    paths = glob.glob(folder + '/*.txt')
+    features = [ p.split('/')[-1][:-4] for p in paths]
+    for f in features:
+        lines = open(folder + '/' + f + '.txt').readlines()
+        minValue, maxValue = None, None
+        d = {}
+        for line in lines:
+            words = line.split()
+            k = words[0]
+            v = float(words[1])
+            d[k] = v
+            if minValue == None:
+                minValue = v
+                maxValue = v
+            if v < minValue:
+                minValue = v
+            if v > maxValue:
+                maxValue = v
+        if minValue == maxValue:
+            if clean:
+                os.remove(folder + '/' + f + '.txt')
+            print >> sys.stderr, 'Feature', f, 'is constant.'
 
 def normalizeFeatures(inputFolder, outputFolder):
     if not os.path.exists(outputFolder):
@@ -1077,20 +1123,32 @@ def testCrossValidation():
     print cross_validation(ids_train, ids_test, 'vowpalwabbit', 'features', createTrainTest = True)
 
         
+def main():
 
-if __name__ == '__main__':
-    
     # Uncomment to re-compute the features.
 #     computeTransactionsSubset()
-     computeFeaturesFirstPass()
-     computeFeaturesSecondPass()
+#     computeFeaturesFirstPass()
+#     computeFeaturesSecondPass()
 #    testCrossValidation()
     
+#    detectConstantFeatures('features')
+#    normalizeFeatures('features', 'normalizedFeatures')    
+    create_submission_file('liblinear','normalizedFeatures', 
+        'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
+    
+#    ids_test = getIds('test')
+#    resultsFile = 'experiments/liblinear/out.txt'
+#    submissionFile = 'submissions/sub-liblinear.csv.gz'
+#    parseLiblinearResults(ids_test, resultsFile, submissionFile)
+#
 
-    # normalizeFeatures('features', 'normalizedFeatures')    
-    # runExperiments('liblinear','normalizedFeatures', 'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
+#    create_submission_file('vowpalwabbit', 'features2', 'submissions/sub-vw.csv.gz', createTrainTest = True)
     
     # runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
 
+
+if __name__ == '__main__':
+    
+    main()
 
 
