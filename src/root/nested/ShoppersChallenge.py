@@ -1375,8 +1375,8 @@ def main():
     
 #    detectConstantFeatures('features')
 #    normalizeFeatures('features', 'normalizedFeatures')    
-    create_submission_file('liblinear','normalizedFeatures', 
-        'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
+#    create_submission_file('liblinear','normalizedFeatures', 
+#        'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
     
 #    ids_test = getIds('test')
 #    resultsFile = 'experiments/liblinear/out.txt'
@@ -1392,3 +1392,5 @@ def main():
 if __name__ == '__main__':
     
     main()
+
+
