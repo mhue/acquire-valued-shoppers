@@ -914,7 +914,7 @@ def computeFeaturesSecondPass():
     saveIt(total_d_60, 'total_d_60.txt')
     saveIt(total_d_180, 'total_d_180.txt')
     saveIt(total_q, 'total_q.txt')
-    saveIt(total_q_30, 'total_q30.txt')
+    saveIt(total_q_30, 'total_q_30.txt')
     saveIt(total_q_60, 'total_q_60.txt')
     saveIt(total_q_180, 'total_q_180.txt')
     saveIt(total_qm_, 'total_qm_.txt')
