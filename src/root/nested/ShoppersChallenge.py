@@ -1033,22 +1033,70 @@ def computeFeaturesThirdPass():
         total_d_180[row.split()[0]] = float(row.split()[1])
     
     for shopper in ids:
-        average_transaction_a[shopper] = total_a[shopper]/total_n[shopper]
-        average_transaction_a_30[shopper] = total_a_30[shopper]/total_30[shopper]
-        average_transaction_a_60[shopper] = total_a_60[shopper]/total_60[shopper]
-        average_transaction_a_180[shopper] = total_a_180[shopper]/total_180[shopper]
-        average_transaction_q[shopper] = total_q[shopper]/total_n[shopper]
-        average_transaction_q_30[shopper] = total_q_30[shopper]/total_30[shopper]
-        average_transaction_q_60[shopper] = total_q_60[shopper]/total_60[shopper]
-        average_transaction_q_180[shopper] = total_q_180[shopper]/total_180[shopper]
-        average_day_a[shopper] = total_a[shopper]/total_d[shopper]
-        average_day_a_30[shopper] = total_a_30[shopper]/total_d_30[shopper]
-        average_day_a_60[shopper] = total_a_60[shopper]/total_d_60[shopper]
-        average_day_a_180[shopper] = total_a_180[shopper]/total_d_180[shopper]
-        average_day_q[shopper] = total_q[shopper]/total_d[shopper]
-        average_day_q_30[shopper] = total_q_30[shopper]/total_d_30[shopper]
-        average_day_q_60[shopper] = total_q_60[shopper]/total_d_60[shopper]
-        average_day_q_180[shopper] = total_q_180[shopper]/total_d_180[shopper]
+        if total_n[shopper] == 0:
+            average_transaction_a[shopper] = 0
+        else:
+            average_transaction_a[shopper] = total_a[shopper]/total_n[shopper]
+        if total_30[shopper] == 0:
+            average_transaction_a_30[shopper] = 0
+        else:
+            average_transaction_a_30[shopper] = total_a_30[shopper]/total_30[shopper]
+        if total_60[shopper] == 0:
+            average_transaction_a_60[shopper] = 0
+        else:
+            average_transaction_a_60[shopper] = total_a_60[shopper]/total_60[shopper]
+        if total_180[shopper] == 0:
+            average_transaction_a_180[shopper] = 0
+        else:
+            average_transaction_a_180[shopper] = total_a_180[shopper]/total_180[shopper]
+        if total_n[shopper] == 0:
+            average_transaction_q[shopper] = 0
+        else:
+            average_transaction_q[shopper] = total_q[shopper]/total_n[shopper]
+        if total_30[shopper] == 0:
+            average_transaction_q_30[shopper] = 0
+        else:
+            average_transaction_q_30[shopper] = total_q_30[shopper]/total_30[shopper]
+        if total_60[shopper] == 0:
+            average_transaction_q_60[shopper] = 0
+        else:
+            average_transaction_q_60[shopper] = total_q_60[shopper]/total_60[shopper]
+        if total_180[shopper] == 0:
+            average_transaction_q_180[shopper] = 0
+        else:
+            average_transaction_q_180[shopper] = total_q_180[shopper]/total_180[shopper]
+        if total_d[shopper] == 0:
+            average_day_a[shopper] = 0
+        else:
+            average_day_a[shopper] = total_a[shopper]/total_d[shopper]
+        if total_d_30[shopper] == 0:
+            average_day_a_30[shopper] = 0
+        else:
+            average_day_a_30[shopper] = total_a_30[shopper]/total_d_30[shopper]
+        if total_d_60[shopper] == 0:
+            average_day_a_60[shopper] = 0
+        else:
+            average_day_a_60[shopper] = total_a_60[shopper]/total_d_60[shopper]
+        if total_d_180[shopper] == 0:
+            average_day_a_180[shopper] = 0
+        else:
+            average_day_a_180[shopper] = total_a_180[shopper]/total_d_180[shopper]
+        if total_d[shopper] == 0:
+            average_day_q[shopper] = 0
+        else:
+            average_day_q[shopper] = total_q[shopper]/total_d[shopper]
+        if total_d_30[shopper] == 0:
+            average_day_q_30[shopper] = 0
+        else:
+            average_day_q_30[shopper] = total_q_30[shopper]/total_d_30[shopper]
+        if total_d_60[shopper] == 0:
+            average_day_q_60[shopper] = 0
+        else:
+            average_day_q_60[shopper] = total_q_60[shopper]/total_d_60[shopper]
+        if total_d_180[shopper] == 0:
+            average_day_q_180[shopper] = 0
+        else:
+            average_day_q_180[shopper] = total_q_180[shopper]/total_d_180[shopper]
         
     
         
