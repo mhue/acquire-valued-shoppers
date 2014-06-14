@@ -1196,11 +1196,7 @@ def runExperiments(ids_train, ids_test, library):
             testFile,
             modelFile,
             resultsFile ]
-
-        # Race condition? It seems c2 is launched before c1 is done:
-        # "TypeError: coercing to Unicode: need string or buffer, NoneType found"
-        ret_code = subprocess.call(c)
-
+        subprocess.call(c)
         subprocess.call(c2)
 
     if library == 'vowpalwabbit':
@@ -1216,7 +1212,7 @@ def runExperiments(ids_train, ids_test, library):
             '-p ' + resultsFile
         print c
         subprocess.call(c, shell=True)
-        return resultsFile
+    return resultsFile
         
 def create_submission_file(library, folder, submissionFile, createTrainTest = True):
     ids_train = getIds('train')
