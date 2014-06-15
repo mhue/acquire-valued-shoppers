@@ -1211,7 +1211,7 @@ def processResults(ids, library, results, submissionFile):
     if library == 'vowpalwabbit':
         parsevowpalwabbitResults(ids, results, submissionFile)
 
-def runExperiments(ids_train, ids_test, library):
+def computePredictions(ids_train, ids_test, library):
     
     if library == 'liblinear':
 
@@ -1252,7 +1252,7 @@ def create_submission_file(library, folder, submissionFile, createTrainTest = Tr
     if createTrainTest:
         createFeatureFiles(ids_train, features, folder, library, 'train')
         createFeatureFiles(ids_test, features, folder, library, 'test')
-    resultsFile = runExperiments(ids_train, ids_test, library)
+    resultsFile = computePredictions(ids_train, ids_test, library)
     processResults(ids_test, library, resultsFile, submissionFile)
 
 def detectConstantFeatures(folder, clean=True):
@@ -1307,14 +1307,58 @@ def normalizeFeatures(inputFolder, outputFolder):
         fout = open(outputFolder + '/' + f + '.txt', 'w')
         fout.write('\n'.join(toWrite)+'\n')
         fout.close()
-        
-def cross_validation(ids_train, ids_test, library, folder, createTrainTest = True):
-    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+
+def getListOfAllFeatures(featuresFolder='features'):
+    '''
+    Return the list of features available in a folder.
+    '''
+    featuresFiles = [p for p in glob.glob(featuresFolder + '/*.txt')]
     features = [p.split('/')[-1][:-4] for p in featuresFiles]
+    return features
+
+def getListFeatures(listFile, featuresFolder='features'):
+    '''
+    Return the list of features available in a folder.
+    '''
+    fid = open(listFile)
+    allFeaturesFound = True
+    for line in fid:
+        f = line.strip()
+        if f == '' or f.startswith('#'):
+            continue
+        featureFile = featuresFolder + '/' + f + '.txt'
+        if not os.path.exists(featureFile):
+            print >>sys.stderr, 'could not find %s' % featureFile
+        allFeaturesFound &= os.path.exists(featureFile)
+        features.append(line)
+    fid.close()
+    featuresFiles = [p for p in glob.glob(featuresFolder + '/*.txt')]
+    features = [p.split('/')[-1][:-4] for p in featuresFiles]
+    if allFeaturesFound:
+        return features
+    return []
+
+def checkFeatures(features, featuresFolder):
+    '''
+    Check that all features correspond to an existing file.
+    '''
+    allFeaturesFound = True
+    for f in features:
+        featureFile = featuresFolder + '/' + f + '.txt'
+        if not os.path.exists(featureFile):
+            print >>sys.stderr, 'could not find %s' % featureFile
+        allFeaturesFound &= os.path.exists(featureFile)
+    return allFeaturesFound
+
+
+def cross_validation(ids_train, ids_test, library, features, featuresFolder='features', createTrainTest = True):
     if createTrainTest:
-        createFeatureFiles(ids_train, features, folder, library, 'train')
-        createFeatureFiles(ids_test, features, folder, library, 'test')
-    resultsFile = runExperiments(ids_train, ids_test, library)
+        createFeatureFiles(ids_train, features, featuresFolder, library, 'train')
+        createFeatureFiles(ids_test, features, featuresFolder, library, 'test')
+    resultsFile = computePredictions(ids_train, ids_test, library)
+    if not os.path.exists('cross_validation' + '/' + library):
+        os.makedirs('cross_validation' + '/' + library)
+    
     processResults(ids_test, library, resultsFile, 'cross_validation' + '/' + library + '/results.csv.gz')
     true_values = []
     probabilities = []
@@ -1367,8 +1411,9 @@ def main():
 
 #    create_submission_file('vowpalwabbit', 'features2', 'submissions/sub-vw.csv.gz', createTrainTest = True)
     
-    # runExperiments('vowpalwabbit', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
+    # computePredictions('vowpalwabbit', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
     testCrossValidation()
+
 
 if __name__ == '__main__':
     
