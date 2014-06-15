@@ -1178,8 +1178,7 @@ def createFeatureFiles(ids, features, folder, library, phase):
     fid.write('\n'.join(lines)+'\n')
     fid.close()
 
-def parseLiblinearResults(ids_test, resultsFile, submissionFile):
-    ids = ids_test
+def parseLiblinearResults(ids, resultsFile, submissionFile):
     n = len(ids)
     predictions = []
     lines = open(resultsFile).readlines()[1:]
