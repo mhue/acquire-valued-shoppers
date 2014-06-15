@@ -110,14 +110,16 @@ def saveIt(d, outfile):
         fileid.write(key + ' ' + str(d[key]) + '\n')
     fileid.close()
 
-def loadIt(infile, convert = False, folder = 'features'):
+def loadIt(infile, valueType = None, folder = 'features'):
     fileid = open(folder + '/' + infile)
     d = {}
     for row in fileid:
         words = row.split()
         key = words[0]
-        if convert:
+        if valueType == 'int':
             value = int(words[1])
+        elif valueType == 'float':
+            value = float(words[1])
         else:
             value = words[1]
         d[key] = value
@@ -980,57 +982,19 @@ def computeFeaturesThirdPass():
             offer_value[shopper] = offer_value_of_shopper[shopper]
             offer_quantity[shopper] = offer_quantity_of_shopper[shopper]
     
-    total_a_file = file('features/total_a.txt', 'r')
-    for row in total_a_file:
-        total_a[row.split()[0]] = float(row.split()[1])
-        
-    total_a_30_file = file('features/total_a_30.txt', 'r')
-    for row in total_a_30_file:
-        total_a_30[row.split()[0]] = float(row.split()[1])
-    
-    total_a_60_file = file('features/total_a_60.txt', 'r')
-    for row in total_a_60_file:
-        total_a_60[row.split()[0]] = float(row.split()[1])
-        
-    total_a_180_file = file('features/total_a_180.txt', 'r')
-    for row in total_a_180_file:
-        total_a_180[row.split()[0]] = float(row.split()[1])
-   
-    total_n_file = file('features/total_n.txt', 'r')
-    for row in total_n_file: 
-        total_n[row.split()[0]] = float(row.split()[1])
-        
-    total_q_file = file('features/total_q.txt', 'r')
-    for row in total_q_file: 
-        total_q[row.split()[0]] = float(row.split()[1])
-        
-    total_q_30_file = file('features/total_q_30.txt', 'r')
-    for row in total_q_30_file:
-        total_q_30[row.split()[0]] = float(row.split()[1])
-    
-    total_q_60_file = file('features/total_q_60.txt', 'r')
-    for row in total_q_60_file:
-        total_q_60[row.split()[0]] = float(row.split()[1])
-        
-    total_q_180_file = file('features/total_q_180.txt', 'r')
-    for row in total_q_180_file:
-        total_q_180[row.split()[0]] = float(row.split()[1])
-    
-    total_d_file = file('features/total_d.txt', 'r')
-    for row in total_d_file: 
-        total_d[row.split()[0]] = float(row.split()[1])
-        
-    total_d_30_file = file('features/total_d_30.txt', 'r')
-    for row in total_d_30_file:
-        total_d_30[row.split()[0]] = float(row.split()[1])
-    
-    total_d_60_file = file('features/total_d_60.txt', 'r')
-    for row in total_d_60_file:
-        total_d_60[row.split()[0]] = float(row.split()[1])
-        
-    total_d_180_file = file('features/total_d_180.txt', 'r')
-    for row in total_d_180_file:
-        total_d_180[row.split()[0]] = float(row.split()[1])
+    total_a = loadIt('total_a.txt', valueType='float')
+    total_a_30 = loadIt('total_a_30.txt', valueType='float')
+    total_a_60 = loadIt('total_a_60.txt', valueType='float')
+    total_a_180 = loadIt('total_a_180.txt', valueType='float')
+    total_n = loadIt('total_n.txt', valueType='float')
+    total_q = loadIt('total_q.txt', valueType='float')
+    total_q_30 = loadIt('total_q_30.txt', valueType='float')
+    total_q_60 = loadIt('total_q_60.txt', valueType='float')
+    total_q_180 = loadIt('total_q_180.txt', valueType='float')
+    total_d = loadIt('total_d.txt', valueType='float')
+    total_d_30 = loadIt('total_d_30.txt', valueType='float')
+    total_d_60 = loadIt('total_d_60.txt', valueType='float')
+    total_d_180 = loadIt('total_d_180.txt', valueType='float')
     
     for shopper in ids:
         if total_n[shopper] == 0:
