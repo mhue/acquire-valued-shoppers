@@ -133,6 +133,24 @@ def getIds(phase):
     fid.close()
     return ids
 
+def getTrainingSubsetIds(startdate='2013-03-01', enddate='2013-04-07'):
+    '''
+    return the shoppers ids between two dates.
+    '''
+    ids = []
+    fid = open('trainHistory.csv')
+    
+    cr = csv.reader(fid)
+    header = cr.next()
+    i = header.index('offerdate')
+    for row in cr:
+        id = row[0]
+        date = row[i]
+        if startdate <= date < enddate:
+            ids.append(id)
+    fid.close()
+    return ids
+
 def computeTransactionsSubset():
     '''
     Computes a subset of the transactions.
@@ -1314,20 +1332,19 @@ def cross_validation(ids_train, ids_test, library, folder, createTrainTest = Tru
     return roc_auc_score(true_values_array, probabilities_array)
         
 def testCrossValidation():
-    ids_train = []
-    ids_test = []
+
     train_history_file = file('trainHistory.csv', 'rU')
     train_history = csv.reader(train_history_file)
     header_train_history = train_history.next()
     rownum = 0
-    for row in train_history:
-        if rownum < 80030:
-            ids_train.append(row[0])
-        else: ids_test.append(row[0])
-        rownum = rownum + 1
-    print cross_validation(ids_train, ids_test, 'vowpalwabbit', 'features', createTrainTest = True)
 
-        
+    train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
+    test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
+
+    # print cross_validation(train_ids, test_ids, 'vowpalwabbit', 'features', createTrainTest = False)
+    print cross_validation(train_ids, test_ids, 'liblinear', 'features', createTrainTest = False)
+
+
 def main():
 
     # Uncomment to re-compute the features.
