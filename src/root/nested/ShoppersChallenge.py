@@ -1135,7 +1135,8 @@ def createFeatureFiles(ids, features, folder, library, phase):
     if not os.path.exists(folder + '/' + phase):
         os.makedirs(folder + '/' + phase)
     ids = getIds(phase)
-    # Load each dictionary
+
+    # Prepare for each feature.
     for i in range(nf):
         
         featuresFile = features[i] +'.txt'
