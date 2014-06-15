@@ -1240,7 +1240,6 @@ def computePredictions(ids_train, ids_test, library):
             ' && vw -i ' + modelFile + ' --loss_function quantile ' + \
             '-t ' + testFile + ' ' + \
             '-p ' + resultsFile
-        print c
         subprocess.call(c, shell=True)
     return resultsFile
         
