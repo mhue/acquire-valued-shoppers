@@ -1428,14 +1428,15 @@ def main():
 #    resultsFile = 'experiments/liblinear/out.txt'
 #    submissionFile = 'submissions/sub-liblinear.csv.gz'
 #    parseLiblinearResults(ids_test, resultsFile, submissionFile)
-#
 
-#    create_submission_file('vw', 'features2', 'submissions/sub-vw.csv.gz', createTrainTest = True)
+#    create_submission_file('vw', 'features2', 'submissions/sub-vw.csv.gz',
+#                           createTrainTest = True)
 
-    # computePredictions('vw', 'features', 'submissions/sub-vw.csv.gz', createTrainTest = True)
+#    computePredictions('vw', 'features', 'submissions/sub-vw.csv.gz',
+#                       createTrainTest = True)
+
     testCrossValidation()
 
 
 if __name__ == '__main__':
     main()
-    
