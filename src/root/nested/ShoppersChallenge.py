@@ -1175,6 +1175,14 @@ def createFeatureFiles(ids, features, libraryFormat, outFile):
 
 
 def parseLiblinearResults(ids, resultsFile, predictionsFile):
+    """
+    Converts Liblinear results into a CSV format.
+    Args:
+        ids: a list of strings; the shoppers ids in the results.
+        resultsFile: a string; the file where Liblinear results were stored.
+        predictionsFile: a string: a CSV file with "id,probability" columns.
+    """
+
     n = len(ids)
     lines = open(resultsFile).readlines()[1:]
     header = 'id,repeatProbability'
