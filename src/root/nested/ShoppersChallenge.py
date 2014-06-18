@@ -1129,7 +1129,9 @@ def createFeatureFiles(ids, features, libraryFormat, outFile):
         if libraryFormat == 'liblinear':
             words = [str(target)]
         if libraryFormat == 'vw':
-            words = ['%f 1.0 %s |' % (target, ids[i])]
+            # FIXME: What's wrong if we put a label ?
+            # words = ['%f 1.0 %s |' % (target, ids[i])]
+            words = ['%f |' % target]
         for j in range(nf):
             value = fileIDs[j].readline().strip()
             if value == '0':
@@ -1166,14 +1168,14 @@ def parseLiblinearResults(ids, resultsFile, predictionsFile):
     fid.close()
 
 
-def parseVowpalWabbitResults(resultsFile, predictionsFile):
+def parseVowpalWabbitResults(ids, resultsFile, predictionsFile):
     """
     Converts Vowpal-Wabbit results into a CSV format.
     Args:
+        ids: a list of strings; the shoppers ids in the results.
         resultsFile: a string; the file where Liblinear results were stored.
         predictionsFile: a string: a CSV file with "id,probability" columns.
     """
-    ids = getIds('test')
     n = len(ids)
     lines = open(resultsFile).readlines()
 
@@ -1217,12 +1219,12 @@ def computePredictions(library, parameters, trainFile, testFile,
         parseLiblinearResults(test_ids, resultsFile, predictionsFile)
 
     if library == 'vw':
-        c = ['vw ' + trainFile, '-f', modelFile]
-        c2 = ['vw', '-i', modelFile, '--loss_function', 'quantile',
-              '-t', testFile, '-p', resultsFile]
+        c = ['vw', trainFile, '-f', modelFile]
+        c2 = ['vw', '-i', modelFile,
+              '-t', testFile, '-p', resultsFile] + parameters['predict']
         subprocess.call(c)
         subprocess.call(c2)
-        parseVowpalWabbitResults(resultsFile, predictionsFile)
+        parseVowpalWabbitResults(test_ids, resultsFile, predictionsFile)
 
 
 def detectConstantFeatures(folder, clean=True):
@@ -1388,24 +1390,26 @@ def testCrossValidation():
     train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
     test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
     allFeatures = getListOfAllFeatures()
-    features = allFeatures[:2]
 
-    # Testing with liblinear.
-    parameters = {
-        'train': ['-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
-        'predict': ['-b', '1']}
-    score = runExperiment(
-        'lib-1', train_ids, test_ids, features, 'liblinear', parameters,
-        predictionScores=True)
-    print score
+    if False:
+        # Testing with liblinear.
+        features = allFeatures[:2]
+        parameters = {
+            'train': ['-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
+            'predict': ['-b', '1']}
+        score = runExperiment(
+            'lib-1', train_ids, test_ids, features, 'liblinear', parameters,
+            predictionScores=True)
+        print score
 
     # Testing with vowpal-wabbit.
+    features = allFeatures[:10]
     parameters = {
-        'train': ['-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
-        'predict': ['-b', '1']}
+        'train': [],
+        'predict': ['--loss_function', 'quantile']}
     score = runExperiment(
         'vw-1', train_ids, test_ids, features, 'vw', parameters,
-        predictionScores=True)
+        createTrainTest=True, predictionScores=True)
 
     print score
 
