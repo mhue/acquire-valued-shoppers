@@ -97,7 +97,7 @@ def total_days_in_date(date):
         else:
             total_month_days = total_month_days + month_length[
                 current_month] + 1
-        current_month = current_month + 1
+        current_month += 1
     return total_year_days + total_month_days + day
 
 
@@ -179,21 +179,16 @@ def computeTransactionsSubset():
     header = cr.next()
     fout.write(','.join(header) + '\n')
 
-    IDIndex = header.index('id')
     categoryIndex = header.index('category')
     companyIndex = header.index('company')
     brandIndex = header.index('brand')
-    dateIndex = header.index('date')
-    quantityIndex = header.index('purchasequantity')
 
     steps = 0
     N = 1000000
     for row in cr:
-        ID = row[IDIndex]
         company = row[companyIndex]
         category = row[categoryIndex]
         brand = row[brandIndex]
-        quantity = row[quantityIndex]
         if company in companies or category in categories or brand in brands:
             fout.write(','.join(row) + '\n')
         if steps % N == 0:
@@ -356,13 +351,10 @@ def computeFeaturesFirstPass():
     header = transactions.next()
 
     IDIndex = header.index('id')
-    chainIndex = header.index('chain')
-    deptIndex = header.index('dept')
     categoryIndex = header.index('category')
     companyIndex = header.index('company')
     brandIndex = header.index('brand')
     dateIndex = header.index('date')
-    productSizeIndex = header.index('productsize')
     measureIndex = header.index('productmeasure')
     quantityIndex = header.index('purchasequantity')
     amountIndex = header.index('purchaseamount')
@@ -371,13 +363,10 @@ def computeFeaturesFirstPass():
     for row in transactions:
 
         ID = row[IDIndex]
-        chain = row[chainIndex]
-        dept = row[deptIndex]
         category = row[categoryIndex]
         company = row[companyIndex]
         brand = row[brandIndex]
         date = row[dateIndex]
-        productSize = row[productSizeIndex]
         measure = row[measureIndex]
         quantity = float(row[quantityIndex])
         amount = float(row[amountIndex])
@@ -525,8 +514,8 @@ def computeFeaturesFirstPass():
                 company_brand_60[ID] += 1
             if dt <= 180:
                 company_brand_180[ID] += 1
-        if company_of_shopper[ID] == company and category_of_shopper[
-            ID] == category:
+        if company_of_shopper[ID] == company and \
+                category_of_shopper[ID] == category:
             company_category_b[ID] = 1
             company_category_n[ID] += 1
             company_category_a[ID] += amount
@@ -562,8 +551,8 @@ def computeFeaturesFirstPass():
                 company_category_60[ID] += 1
             if dt <= 180:
                 company_category_180[ID] += 1
-        if category_of_shopper[ID] == category and brand_of_shopper[
-            ID] == brand:
+        if category_of_shopper[ID] == category and \
+                brand_of_shopper[ID] == brand:
             category_brand_b[ID] = 1
             category_brand_n[ID] += 1
             category_brand_a[ID] += amount
@@ -598,8 +587,9 @@ def computeFeaturesFirstPass():
                 category_brand_60[ID] += 1
             if dt <= 180:
                 category_brand_180[ID] += 1
-        if company_of_shopper[ID] == company and category_of_shopper[
-            ID] == category and brand_of_shopper[ID] == brand:
+        if company_of_shopper[ID] == company and \
+                category_of_shopper[ID] == category and \
+                brand_of_shopper[ID] == brand:
             company_category_brand_b[ID] = 1
             company_category_brand_n[ID] += 1
             company_category_brand_a[ID] += amount
@@ -780,10 +770,11 @@ def computeFeaturesFirstPass():
 
 
 def computeFeaturesSecondPass():
-    '''
-    Those features are slower to compute, because all of the transactions are read.
+    """
+    Those features are slower to compute, because all of the transactions are
+    read.
 
-    '''
+    """
 
     readOffers()
     readShoppers()
@@ -825,20 +816,12 @@ def computeFeaturesSecondPass():
     total_q_60 = dict(zip(ids, [0] * n))
     total_q_180 = dict(zip(ids, [0] * n))
 
-    #
-    #
     fid = gzip.GzipFile('transactions.csv.gz', 'rU')
     transactions = csv.reader(fid)
     header = transactions.next()
 
     IDIndex = header.index('id')
-    chainIndex = header.index('chain')
-    deptIndex = header.index('dept')
-    categoryIndex = header.index('category')
-    companyIndex = header.index('company')
-    brandIndex = header.index('brand')
     dateIndex = header.index('date')
-    productsizeIndex = header.index('productsize')
     measureIndex = header.index('productmeasure')
     quantityIndex = header.index('purchasequantity')
     amountIndex = header.index('purchaseamount')
@@ -847,13 +830,7 @@ def computeFeaturesSecondPass():
     for row in transactions:
 
         ID = row[IDIndex]
-        chain = row[chainIndex]
-        dept = row[deptIndex]
-        category = row[categoryIndex]
-        company = row[companyIndex]
-        brand = row[brandIndex]
         date = row[dateIndex]
-        productsize = row[productsizeIndex]
         measure = row[measureIndex]
         quantity = float(row[quantityIndex])
         amount = float(row[amountIndex])
@@ -963,22 +940,9 @@ def computeFeaturesThirdPass():
 
     offer_value = dict(zip(ids, [0] * n))
     offer_quantity = dict(zip(ids, [0] * n))
-    total_n = dict(zip(ids, [0] * n))
     total_30 = dict(zip(ids, [0] * n))
     total_60 = dict(zip(ids, [0] * n))
     total_180 = dict(zip(ids, [0] * n))
-    total_a_30 = dict(zip(ids, [0] * n))
-    total_a_60 = dict(zip(ids, [0] * n))
-    total_a_180 = dict(zip(ids, [0] * n))
-    total_a = dict(zip(ids, [0] * n))
-    total_q = dict(zip(ids, [0] * n))
-    total_q_30 = dict(zip(ids, [0] * n))
-    total_q_60 = dict(zip(ids, [0] * n))
-    total_q_180 = dict(zip(ids, [0] * n))
-    total_d = dict(zip(ids, [0] * n))
-    total_d_30 = dict(zip(ids, [0] * n))
-    total_d_60 = dict(zip(ids, [0] * n))
-    total_d_180 = dict(zip(ids, [0] * n))
     average_transaction_a = dict(zip(ids, [0] * n))
     average_transaction_a_30 = dict(zip(ids, [0] * n))
     average_transaction_a_60 = dict(zip(ids, [0] * n))
@@ -1211,7 +1175,6 @@ def parseVowpalWabbitResults(resultsFile, predictionsFile):
     """
     ids = getIds('test')
     n = len(ids)
-    predictions = []
     lines = open(resultsFile).readlines()
 
     header = 'id,repeatProbability'
@@ -1235,9 +1198,10 @@ def computePredictions(library, parameters, trainFile, testFile,
             library.
         trainFile: string; the name of the training file.
         testFile: string; the name of the test file.
-        predictionsFile: string, the name of the output file.
+            predictionsFile: string, the name of the output file.
 
-        test_ids: a list of string's; needs to be specified only for 'liblinear'.
+        test_ids: a list of string's; needs to be specified only for
+            'liblinear'.
     """
 
     modelFile = trainFile + '.model'
@@ -1293,20 +1257,22 @@ def normalizeFeatures(inputFolder, outputFolder):
     features = [p.split('/')[-1][:-4] for p in paths]
     for f in features:
         lines = open(inputFolder + '/' + f + '.txt').readlines()
-        minValue, maxValue = None, None
+        firstTime = True
+        minValue, maxValue = 0, 0
         d = {}
         for line in lines:
             words = line.split()
             k = words[0]
             v = float(words[1])
-            d[k] = v
-            if minValue is None:
+            if firstTime:
                 minValue = v
                 maxValue = v
+            d[k] = v
             if v < minValue:
                 minValue = v
             if v > maxValue:
                 maxValue = v
+            firstTime = False
         toWrite = []
         for k in d:
             normalizedValue = (d[k] - minValue) / (maxValue - minValue)
@@ -1365,7 +1331,7 @@ def computeAUCScores(predictionsFile):
     targets = readTargets()
     process_results_file = gzip.GzipFile(predictionsFile, 'r')
     process_results = csv.reader(process_results_file)
-    process_results.next() # Skip the header.
+    process_results.next()  # Skip the header.
     for row in process_results:
         value = targets[row[0]]
         true_values.append(int(value))
@@ -1472,5 +1438,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
+    
