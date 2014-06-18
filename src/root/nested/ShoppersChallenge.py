@@ -5,11 +5,12 @@ Created on Jun 5, 2014
 """
 import os
 import sys
-from sklearn.metrics import roc_auc_score
 import csv
 import glob
 import subprocess
 import gzip
+
+from sklearn.metrics import roc_auc_score
 import numpy
 
 
@@ -21,7 +22,6 @@ offer_quantity_of_offer = {}
 
 
 def readOffers():
-
     offersFile = file('offers.csv', 'rU')
     offers = csv.reader(offersFile)
     header_offers = offers.next()
@@ -34,7 +34,6 @@ def readOffers():
     brandIndex = header_offers.index('brand')
 
     for row in offers:
-
         offer = row[offerIndex]
         category = row[categoryIndex]
         quantity = row[quantityIndex]
@@ -73,13 +72,15 @@ def readShoppers():
             category_of_shopper[ID] = category_of_offer[offer]
             brand_of_shopper[ID] = brand_of_offer[offer]
             offer_value_of_shopper[ID] = float(offer_value_of_offer[offer])
-            offer_quantity_of_shopper[ID] = float(offer_quantity_of_offer[offer])
+            offer_quantity_of_shopper[ID] = float(
+                offer_quantity_of_offer[offer])
             date_of_shopper[ID] = date
         fid.close()
 
 
 def total_days_in_date(date):
-    month_length = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
+    month_length = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31,
+                    9: 30, 10: 31, 11: 30, 12: 31}
     d = list(date)
     list_year = [d[0], d[1], d[2], d[3]]
     year = int(''.join(list_year))
@@ -87,14 +88,15 @@ def total_days_in_date(date):
     month = int(''.join(list_month))
     list_day = [d[8], d[9]]
     day = int(''.join(list_day))
-    total_year_days = ((year - 1)/4 + 1) + year*365
+    total_year_days = ((year - 1) / 4 + 1) + year * 365
     total_month_days = 0
     current_month = 1
     while current_month < month:
-        if current_month != 2 or year%4 != 0:
+        if current_month != 2 or year % 4 != 0:
             total_month_days = total_month_days + month_length[current_month]
         else:
-            total_month_days = total_month_days + month_length[current_month] + 1
+            total_month_days = total_month_days + month_length[
+                current_month] + 1
         current_month = current_month + 1
     return total_year_days + total_month_days + day
 
@@ -165,8 +167,10 @@ def computeTransactionsSubset():
 
     readOffers()
 
-    companies = dict(zip(company_of_offer.values(), [0] * len(company_of_offer)))
-    categories = dict(zip(category_of_offer.values(), [0] * len(category_of_offer)))
+    companies = dict(
+        zip(company_of_offer.values(), [0] * len(company_of_offer)))
+    categories = dict(
+        zip(category_of_offer.values(), [0] * len(category_of_offer)))
     brands = dict(zip(brand_of_offer.values(), [0] * len(brand_of_offer)))
 
     fin = gzip.GzipFile('transactions.csv.gz')
@@ -521,7 +525,8 @@ def computeFeaturesFirstPass():
                 company_brand_60[ID] += 1
             if dt <= 180:
                 company_brand_180[ID] += 1
-        if company_of_shopper[ID] == company and category_of_shopper[ID] == category:
+        if company_of_shopper[ID] == company and category_of_shopper[
+            ID] == category:
             company_category_b[ID] = 1
             company_category_n[ID] += 1
             company_category_a[ID] += amount
@@ -557,7 +562,8 @@ def computeFeaturesFirstPass():
                 company_category_60[ID] += 1
             if dt <= 180:
                 company_category_180[ID] += 1
-        if category_of_shopper[ID] == category and brand_of_shopper[ID] == brand:
+        if category_of_shopper[ID] == category and brand_of_shopper[
+            ID] == brand:
             category_brand_b[ID] = 1
             category_brand_n[ID] += 1
             category_brand_a[ID] += amount
@@ -592,7 +598,8 @@ def computeFeaturesFirstPass():
                 category_brand_60[ID] += 1
             if dt <= 180:
                 category_brand_180[ID] += 1
-        if company_of_shopper[ID] == company and category_of_shopper[ID] == category and brand_of_shopper[ID] == brand:
+        if company_of_shopper[ID] == company and category_of_shopper[
+            ID] == category and brand_of_shopper[ID] == brand:
             company_category_brand_b[ID] = 1
             company_category_brand_n[ID] += 1
             company_category_brand_a[ID] += amount
@@ -628,17 +635,13 @@ def computeFeaturesFirstPass():
             if dt <= 180:
                 company_category_brand_180[ID] += 1
 
-
-
-
         N = 1000000
         if steps % N == 0:
-            print >>sys.stderr, steps / N,
+            print >> sys.stderr, steps / N,
         steps += 1
 
-
     fid.close()
-    print >>sys.stderr
+    print >> sys.stderr
 
     # Save the results in text files.
     saveIt(company_b, 'company_b.txt')
@@ -791,10 +794,10 @@ def computeFeaturesSecondPass():
     total_b = dict(zip(ids, [0] * n))
     total_n = dict(zip(ids, [0] * n))
     total_d = dict(zip(ids, [0] * n))
-    days = dict(zip(ids, [set()]*n))
-    days_30 = dict(zip(ids, [set()]*n))
-    days_60 = dict(zip(ids, [set()]*n))
-    days_180 = dict(zip(ids, [set()]*n))
+    days = dict(zip(ids, [set()] * n))
+    days_30 = dict(zip(ids, [set()] * n))
+    days_60 = dict(zip(ids, [set()] * n))
+    days_180 = dict(zip(ids, [set()] * n))
     total_a = dict(zip(ids, [0] * n))
     total_q = dict(zip(ids, [0] * n))
     total_qm_ = dict(zip(ids, [0] * n))
@@ -822,8 +825,8 @@ def computeFeaturesSecondPass():
     total_q_60 = dict(zip(ids, [0] * n))
     total_q_180 = dict(zip(ids, [0] * n))
 
-#
-#
+    #
+    #
     fid = gzip.GzipFile('transactions.csv.gz', 'rU')
     transactions = csv.reader(fid)
     header = transactions.next()
@@ -911,18 +914,15 @@ def computeFeaturesSecondPass():
             total_d[ID] += 1
             days[ID].add(date)
 
-
         N = 1000000
         if steps % N == 0:
-            print >>sys.stderr, steps / N,
+            print >> sys.stderr, steps / N,
         steps += 1
 
-
-
-    print >>sys.stderr
+    print >> sys.stderr
     fid.close()
 
-#     Save the results in text files.
+    #     Save the results in text files.
     saveIt(total_b, 'total_b.txt')
     saveIt(total_a, 'total_a.txt')
     saveIt(total_a_30, 'total_a_30.txt')
@@ -997,8 +997,8 @@ def computeFeaturesThirdPass():
     average_day_q_180 = dict(zip(ids, [0] * n))
 
     for shopper in ids:
-            offer_value[shopper] = offer_value_of_shopper[shopper]
-            offer_quantity[shopper] = offer_quantity_of_shopper[shopper]
+        offer_value[shopper] = offer_value_of_shopper[shopper]
+        offer_quantity[shopper] = offer_quantity_of_shopper[shopper]
 
     total_a = loadIt('total_a', valueType='float')
     total_a_30 = loadIt('total_a_30', valueType='float')
@@ -1018,71 +1018,79 @@ def computeFeaturesThirdPass():
         if total_n[shopper] == 0:
             average_transaction_a[shopper] = 0
         else:
-            average_transaction_a[shopper] = total_a[shopper]/total_n[shopper]
+            average_transaction_a[shopper] = total_a[shopper] / total_n[shopper]
         if total_30[shopper] == 0:
             average_transaction_a_30[shopper] = 0
         else:
-            average_transaction_a_30[shopper] = total_a_30[shopper]/total_30[shopper]
+            average_transaction_a_30[shopper] = total_a_30[shopper] / total_30[
+                shopper]
         if total_60[shopper] == 0:
             average_transaction_a_60[shopper] = 0
         else:
-            average_transaction_a_60[shopper] = total_a_60[shopper]/total_60[shopper]
+            average_transaction_a_60[shopper] = total_a_60[shopper] / total_60[
+                shopper]
         if total_180[shopper] == 0:
             average_transaction_a_180[shopper] = 0
         else:
-            average_transaction_a_180[shopper] = total_a_180[shopper]/total_180[shopper]
+            average_transaction_a_180[shopper] = \
+                total_a_180[shopper] / total_180[shopper]
         if total_n[shopper] == 0:
             average_transaction_q[shopper] = 0
         else:
-            average_transaction_q[shopper] = total_q[shopper]/total_n[shopper]
+            average_transaction_q[shopper] = total_q[shopper] / total_n[shopper]
         if total_30[shopper] == 0:
             average_transaction_q_30[shopper] = 0
         else:
-            average_transaction_q_30[shopper] = total_q_30[shopper]/total_30[shopper]
+            average_transaction_q_30[shopper] = total_q_30[shopper] / total_30[
+                shopper]
         if total_60[shopper] == 0:
             average_transaction_q_60[shopper] = 0
         else:
-            average_transaction_q_60[shopper] = total_q_60[shopper]/total_60[shopper]
+            average_transaction_q_60[shopper] = total_q_60[shopper] / total_60[
+                shopper]
         if total_180[shopper] == 0:
             average_transaction_q_180[shopper] = 0
         else:
-            average_transaction_q_180[shopper] = total_q_180[shopper]/total_180[shopper]
+            average_transaction_q_180[shopper] = \
+                total_q_180[shopper] / total_180[shopper]
         if total_d[shopper] == 0:
             average_day_a[shopper] = 0
         else:
-            average_day_a[shopper] = total_a[shopper]/total_d[shopper]
+            average_day_a[shopper] = total_a[shopper] / total_d[shopper]
         if total_d_30[shopper] == 0:
             average_day_a_30[shopper] = 0
         else:
-            average_day_a_30[shopper] = total_a_30[shopper]/total_d_30[shopper]
+            average_day_a_30[shopper] = \
+                total_a_30[shopper] / total_d_30[shopper]
         if total_d_60[shopper] == 0:
             average_day_a_60[shopper] = 0
         else:
-            average_day_a_60[shopper] = total_a_60[shopper]/total_d_60[shopper]
+            average_day_a_60[shopper] = total_a_60[shopper] / total_d_60[
+                shopper]
         if total_d_180[shopper] == 0:
             average_day_a_180[shopper] = 0
         else:
-            average_day_a_180[shopper] = total_a_180[shopper]/total_d_180[shopper]
+            average_day_a_180[shopper] = total_a_180[shopper] / total_d_180[
+                shopper]
         if total_d[shopper] == 0:
             average_day_q[shopper] = 0
         else:
-            average_day_q[shopper] = total_q[shopper]/total_d[shopper]
+            average_day_q[shopper] = total_q[shopper] / total_d[shopper]
         if total_d_30[shopper] == 0:
             average_day_q_30[shopper] = 0
         else:
-            average_day_q_30[shopper] = total_q_30[shopper]/total_d_30[shopper]
+            average_day_q_30[shopper] = total_q_30[shopper] / total_d_30[
+                shopper]
         if total_d_60[shopper] == 0:
             average_day_q_60[shopper] = 0
         else:
-            average_day_q_60[shopper] = total_q_60[shopper]/total_d_60[shopper]
+            average_day_q_60[shopper] = total_q_60[shopper] / total_d_60[
+                shopper]
         if total_d_180[shopper] == 0:
             average_day_q_180[shopper] = 0
         else:
-            average_day_q_180[shopper] = total_q_180[shopper]/total_d_180[shopper]
-
-
-
-
+            average_day_q_180[shopper] = total_q_180[shopper] / total_d_180[
+                shopper]
 
     saveIt(offer_value, 'offer_value.txt')
     saveIt(offer_quantity, 'offer_quantity.txt')
@@ -1157,17 +1165,17 @@ def createFeatureFiles(ids, features, libraryFormat, outFile):
         if libraryFormat == 'liblinear':
             words = [str(target)]
         if libraryFormat == 'vw':
-            words = [str(target) + ' |']
+            words = ['%f 1.0 %s |' % (target, ids[i])]
         for j in range(nf):
             value = fileIDs[j].readline().strip()
             if value == '0':
                 continue
             else:
-                words.append('%d:%s' % (j+1, value))
+                words.append('%d:%s' % (j + 1, value))
         line = ' '.join(words)
         lines.append(line)
     fid = open(outFile, 'w')
-    fid.write('\n'.join(lines)+'\n')
+    fid.write('\n'.join(lines) + '\n')
     fid.close()
 
     for j in range(nf):
@@ -1190,11 +1198,17 @@ def parseLiblinearResults(ids, resultsFile, predictionsFile):
     for i in range(n):
         t.append(ids[i] + ',' + lines[i].split()[1])
     fid = gzip.GzipFile(predictionsFile, 'w')
-    fid.write('\n'.join(t)+'\n')
+    fid.write('\n'.join(t) + '\n')
     fid.close()
 
 
 def parseVowpalWabbitResults(resultsFile, predictionsFile):
+    """
+    Converts Vowpal-Wabbit results into a CSV format.
+    Args:
+        resultsFile: a string; the file where Liblinear results were stored.
+        predictionsFile: a string: a CSV file with "id,probability" columns.
+    """
     ids = getIds('test')
     n = len(ids)
     predictions = []
@@ -1205,7 +1219,7 @@ def parseVowpalWabbitResults(resultsFile, predictionsFile):
     for i in range(n):
         t.append(ids[i] + ',' + lines[i].strip())
     fid = gzip.GzipFile(predictionsFile, 'w')
-    fid.write('\n'.join(t)+'\n')
+    fid.write('\n'.join(t) + '\n')
     fid.close()
 
 
@@ -1229,7 +1243,6 @@ def computePredictions(library, parameters, trainFile, testFile,
     modelFile = trainFile + '.model'
     resultsFile = testFile + '.results'
     if library == 'liblinear':
-
         c = ['liblinear-train'] + parameters['train'] + [trainFile, modelFile]
         c2 = ['liblinear-predict'] + parameters['predict'] + [
             testFile,
@@ -1240,7 +1253,6 @@ def computePredictions(library, parameters, trainFile, testFile,
         parseLiblinearResults(test_ids, resultsFile, predictionsFile)
 
     if library == 'vw':
-
         c = ['vw ' + trainFile, '-f', modelFile]
         c2 = ['vw', '-i', modelFile, '--loss_function', 'quantile',
               '-t', testFile, '-p', resultsFile]
@@ -1251,7 +1263,7 @@ def computePredictions(library, parameters, trainFile, testFile,
 
 def detectConstantFeatures(folder, clean=True):
     paths = glob.glob(folder + '/*.txt')
-    features = [ p.split('/')[-1][:-4] for p in paths]
+    features = [p.split('/')[-1][:-4] for p in paths]
     for f in features:
         lines = open(folder + '/' + f + '.txt').readlines()
         minValue, maxValue = None, None
@@ -1278,7 +1290,7 @@ def normalizeFeatures(inputFolder, outputFolder):
     if not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
     paths = glob.glob(inputFolder + '/*.txt')
-    features = [ p.split('/')[-1][:-4] for p in paths]
+    features = [p.split('/')[-1][:-4] for p in paths]
     for f in features:
         lines = open(inputFolder + '/' + f + '.txt').readlines()
         minValue, maxValue = None, None
@@ -1300,7 +1312,7 @@ def normalizeFeatures(inputFolder, outputFolder):
             normalizedValue = (d[k] - minValue) / (maxValue - minValue)
             toWrite.append(k + ' ' + str(normalizedValue))
         fout = open(outputFolder + '/' + f + '.txt', 'w')
-        fout.write('\n'.join(toWrite)+'\n')
+        fout.write('\n'.join(toWrite) + '\n')
         fout.close()
 
 
@@ -1324,7 +1336,7 @@ def getListFeatures(listFile, folder='features'):
             continue
         featureFile = '%s/%s.txt' % (folder, f)
         if not os.path.exists(featureFile):
-            print >>sys.stderr, 'could not find %s' % featureFile
+            print >> sys.stderr, 'could not find %s' % featureFile
         allFeaturesFound &= os.path.exists(featureFile)
         features.append(line)
     fid.close()
@@ -1341,7 +1353,7 @@ def checkFeatures(features):
     for f in features:
         featureFile = 'features/%s.txt' % f
         if not os.path.exists(featureFile):
-            print >>sys.stderr, 'could not find %s' % featureFile
+            print >> sys.stderr, 'could not find %s' % featureFile
         allFeaturesFound &= os.path.exists(featureFile)
     return allFeaturesFound
 
@@ -1407,25 +1419,34 @@ def runExperiment(experimentName, ids_train, ids_test, features, library,
 
 
 def testCrossValidation():
-
     train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
     test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
-
-    parameters = {
-        'train': ['-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
-        'predict': ['-b', '1'] }
     allFeatures = getListOfAllFeatures()
     features = allFeatures[:2]
+
+    # Testing with liblinear.
+    parameters = {
+        'train': ['-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
+        'predict': ['-b', '1']}
     score = runExperiment(
         'lib-1', train_ids, test_ids, features, 'liblinear', parameters,
         predictionScores=True)
     print score
 
+    # Testing with vowpal-wabbit.
+    parameters = {
+        'train': ['-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
+        'predict': ['-b', '1']}
+    score = runExperiment(
+        'vw-1', train_ids, test_ids, features, 'vw', parameters,
+        predictionScores=True)
+
+    print score
 
 
 def main():
 
-    # Uncomment to re-compute the features.
+# Uncomment to re-compute the features.
 #     computeTransactionsSubset()
 #      computeFeaturesFirstPass()
 #     computeFeaturesSecondPass()
@@ -1450,7 +1471,6 @@ def main():
 
 
 if __name__ == '__main__':
-
     main()
 
 
