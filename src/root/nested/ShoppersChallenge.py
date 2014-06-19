@@ -1129,9 +1129,7 @@ def createFeatureFiles(ids, features, libraryFormat, outFile):
         if libraryFormat == 'liblinear':
             words = [str(target)]
         if libraryFormat == 'vw':
-            # FIXME: What's wrong if we put a label ?
-            # words = ['%f 1.0 %s |' % (target, ids[i])]
-            words = ['%f |' % target]
+            words = ['%f 1.0 %s|' % (target, ids[i])]
         for j in range(nf):
             value = fileIDs[j].readline().strip()
             if value == '0':
@@ -1168,7 +1166,7 @@ def parseLiblinearResults(ids, resultsFile, predictionsFile):
     fid.close()
 
 
-def parseVowpalWabbitResults(ids, resultsFile, predictionsFile):
+def parseVowpalWabbitResults(resultsFile, predictionsFile):
     """
     Converts Vowpal-Wabbit results into a CSV format.
     Args:
@@ -1176,13 +1174,12 @@ def parseVowpalWabbitResults(ids, resultsFile, predictionsFile):
         resultsFile: a string; the file where Liblinear results were stored.
         predictionsFile: a string: a CSV file with "id,probability" columns.
     """
-    n = len(ids)
     lines = open(resultsFile).readlines()
-
     header = 'id,repeatProbability'
     t = [header]
-    for i in range(n):
-        t.append(ids[i] + ',' + lines[i].strip())
+    for line in lines:
+        probability, ID = line.strip().split()
+        t.append('%s,%s' % (ID, probability))
     fid = gzip.GzipFile(predictionsFile, 'w')
     fid.write('\n'.join(t) + '\n')
     fid.close()
@@ -1202,7 +1199,7 @@ def computePredictions(library, parameters, trainFile, testFile,
         testFile: string; the name of the test file.
             predictionsFile: string, the name of the output file.
 
-        test_ids: a list of string's; needs to be specified only for
+        test_ids: a list of string's; needed only for
             'liblinear'.
     """
 
@@ -1224,7 +1221,7 @@ def computePredictions(library, parameters, trainFile, testFile,
               '-t', testFile, '-p', resultsFile] + parameters['predict']
         subprocess.call(c)
         subprocess.call(c2)
-        parseVowpalWabbitResults(test_ids, resultsFile, predictionsFile)
+        parseVowpalWabbitResults(resultsFile, predictionsFile)
 
 
 def detectConstantFeatures(folder, clean=True):
