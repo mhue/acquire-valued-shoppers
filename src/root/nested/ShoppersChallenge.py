@@ -14,6 +14,14 @@ from sklearn.metrics import roc_auc_score
 import numpy
 
 
+class Error(Exception):
+    pass
+
+
+class ConstantFeatureError(Error):
+    pass
+
+
 company_of_offer = {}
 category_of_offer = {}
 brand_of_offer = {}
@@ -1108,7 +1116,7 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
     n = len(ids)
     nf = len(features)
 
-    # Normalize features only for liblinear.
+    # Normalize ~features only for liblinear.
     assert (libraryFormat == 'liblinear' and normalize) or \
         (libraryFormat != 'liblinear' and not normalize)
 
@@ -1119,7 +1127,6 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
     for i in range(nf):
 
         print i, 'reading', features[i]
-
         f = loadIt(features[i], valueType='float')
 
         # Check whether the feature is constant.
@@ -1130,10 +1137,10 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
                 minValue = f[ID]
             if f[ID] > maxValue:
                 maxValue = f[ID]
+
         if minValue == maxValue:
-            print >>sys.stderr, 'Ignoring feature because it is constant:',
-            print >>sys.stderr, features[i]
-            continue
+            message = 'Feature %s is constant; aborting' % features[i]
+            raise ConstantFeatureError(message)
 
         if normalize:
             toWrite = [
@@ -1145,7 +1152,10 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
         out.close()
 
     # Write the features
-    fileIDs = [open('%s/%s.txt' % (tmp_dir, features[i])) for i in range(nf)]
+    fileIDs = {}
+    for i in range(nf):
+        feature = features[i]
+        fileIDs[feature] = open('%s/%s.txt' % (tmp_dir, feature))
 
     lines = []
     for i in range(n):
@@ -1155,7 +1165,7 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
         if libraryFormat == 'vw':
             words = ['%f 1.0 %s|' % (target, ids[i])]
         for j in range(nf):
-            value = fileIDs[j].readline().strip()
+            value = fileIDs[features[j]].readline().strip()
             if value == '0':
                 continue
             else:
@@ -1166,8 +1176,8 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
     fid.write('\n'.join(lines) + '\n')
     fid.close()
 
-    for j in range(nf):
-        fileIDs[j].close()
+    for feature in fileIDs:
+        fileIDs[feature].close()
 
 
 def parseLiblinearResults(ids, resultsFile, predictionsFile):
@@ -1248,13 +1258,34 @@ def computePredictions(library, parameters, trainFile, testFile,
         parseVowpalWabbitResults(resultsFile, predictionsFile)
 
 
-def getListOfAllFeatures(folder='features'):
+def getListOfAllFeatures(folder='features', force=False):
     """ Return the list of available features.
+
+        The constant features are discarded.
+        featuresList.txt is used as a cache.
         Args:
             folder: the folder containing the feature files.
+            force: if True, ignore the cache.
     """
-    featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
-    return [p.split('/')[-1][:-4] for p in featuresFiles]
+    cache = 'featuresList.txt'
+    doIt = force or not os.path.exists(cache)
+    if doIt:
+        featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
+        allFeatures = [p.split('/')[-1][:-4] for p in featuresFiles]
+        features = []
+        nFeatures = len(allFeatures)
+        for i in range(nFeatures):
+            f = loadIt(allFeatures[i])
+            if len(set(f.values())) > 1:
+                features.append(allFeatures[i])
+            else:
+                print allFeatures[i], 'is constant.'
+        fid = open(cache, 'w')
+        fid.write('\n'.join(features))
+        fid.close()
+    else:
+        features = open(cache).read().strip().split()
+    return features
 
 
 def getListFeatures(listFile, folder='features'):
@@ -1362,27 +1393,30 @@ def testCrossValidation():
     scores = []
     if True:
         # Testing with liblinear.
-        features = allFeatures[:10]
-        parameters = {
-            'train': ['-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
-            'predict': ['-b', '1']}
-        score = runExperiment(
-            'lib-1', train_ids, test_ids, features, 'liblinear', parameters,
-            createTrainTest=True, predictionScores=True)
-        print score
-        scores.append(score)
+        for nf in [1, 3, 10, 40]:
+            features = allFeatures[:nf]
+            parameters = {
+                'train': [
+                    '-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
+                'predict': ['-b', '1']}
+            score = runExperiment(
+                'lib-1', train_ids, test_ids, features, 'liblinear', parameters,
+                createTrainTest=True, predictionScores=True)
+            print score
+            scores.append(score)
 
     if True:
         # Testing with vowpal-wabbit.
-        features = allFeatures[:10]
-        parameters = {
-            'train': [],
-            'predict': ['--loss_function', 'quantile']}
-        score = runExperiment(
-            'vw-1', train_ids, test_ids, features, 'vw', parameters,
-            createTrainTest=True, predictionScores=True)
-        print score
-        scores.append(score)
+        for nf in [1, 3, 10, 40]:
+            features = allFeatures[:nf]
+            parameters = {
+                'train': [],
+                'predict': ['--loss_function', 'quantile']}
+            score = runExperiment(
+                'vw-1', train_ids, test_ids, features, 'vw', parameters,
+                createTrainTest=True, predictionScores=True)
+            print score
+            scores.append(score)
     print scores
 
 
@@ -1393,23 +1427,8 @@ def main():
 #      computeFeaturesFirstPass()
 #     computeFeaturesSecondPass()
 #     computeFeaturesThirdPass()
-#    testCrossValidation()
 
-#    detectConstantFeatures('features')
-#    normalizeFeatures('features', 'normalizedFeatures')    
-#    create_submission_file('liblinear','normalizedFeatures', 
-#        'submissions/sub-liblinear-normalized.csv.gz', createTrainTest = False)
-
-#    ids_test = getIds('test')
-#    resultsFile = 'experiments/liblinear/out.txt'
-#    submissionFile = 'submissions/sub-liblinear.csv.gz'
-#    parseLiblinearResults(ids_test, resultsFile, submissionFile)
-
-#    create_submission_file('vw', 'features2', 'submissions/sub-vw.csv.gz',
-#                           createTrainTest = True)
-
-#    computePredictions('vw', 'features', 'submissions/sub-vw.csv.gz',
-#                       createTrainTest = True)
+    getListOfAllFeatures()
 
     testCrossValidation()
 
