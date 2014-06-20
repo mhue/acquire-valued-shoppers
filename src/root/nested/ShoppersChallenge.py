@@ -1092,7 +1092,7 @@ def readTargets():
     return target_of_shopper
 
 
-def createFeatureFiles(ids, features, libraryFormat, outFile):
+def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
     """
     Creates a file corresponding to ids and features. 
     
@@ -1108,14 +1108,38 @@ def createFeatureFiles(ids, features, libraryFormat, outFile):
     n = len(ids)
     nf = len(features)
 
+    # Normalize features only for liblinear.
+    assert (libraryFormat == 'liblinear' and normalize) or \
+        (libraryFormat != 'liblinear' and not normalize)
+
     # Prepare for each feature.
     tmp_dir = outFile + '_temporary_files'
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
     for i in range(nf):
+
         print i, 'reading', features[i]
-        f = loadIt(features[i])
-        toWrite = [f[ID] for ID in ids]
+
+        f = loadIt(features[i], valueType='float')
+
+        # Check whether the feature is constant.
+        value = f.itervalues().next()
+        minValue, maxValue = value, value
+        for ID in f:
+            if f[ID] < minValue:
+                minValue = f[ID]
+            if f[ID] > maxValue:
+                maxValue = f[ID]
+        if minValue == maxValue:
+            print >>sys.stderr, 'Ignoring feature because it is constant:',
+            print >>sys.stderr, features[i]
+            continue
+
+        if normalize:
+            toWrite = [
+                str((f[ID] - minValue) / (maxValue - minValue)) for ID in ids]
+        else:
+            toWrite = [str(f[ID]) for ID in ids]
         out = open('%s/%s.txt' % (tmp_dir, features[i]), 'w')
         out.write('\n'.join(toWrite) + '\n')
         out.close()
@@ -1224,63 +1248,6 @@ def computePredictions(library, parameters, trainFile, testFile,
         parseVowpalWabbitResults(resultsFile, predictionsFile)
 
 
-def detectConstantFeatures(folder, clean=True):
-    paths = glob.glob(folder + '/*.txt')
-    features = [p.split('/')[-1][:-4] for p in paths]
-    for f in features:
-        lines = open(folder + '/' + f + '.txt').readlines()
-        minValue, maxValue = None, None
-        d = {}
-        for line in lines:
-            words = line.split()
-            k = words[0]
-            v = float(words[1])
-            d[k] = v
-            if minValue is None:
-                minValue = v
-                maxValue = v
-            if v < minValue:
-                minValue = v
-            if v > maxValue:
-                maxValue = v
-        if minValue == maxValue:
-            if clean:
-                os.remove(folder + '/' + f + '.txt')
-            print >> sys.stderr, 'Feature', f, 'is constant.'
-
-
-def normalizeFeatures(inputFolder, outputFolder):
-    if not os.path.exists(outputFolder):
-        os.makedirs(outputFolder)
-    paths = glob.glob(inputFolder + '/*.txt')
-    features = [p.split('/')[-1][:-4] for p in paths]
-    for f in features:
-        lines = open(inputFolder + '/' + f + '.txt').readlines()
-        firstTime = True
-        minValue, maxValue = 0, 0
-        d = {}
-        for line in lines:
-            words = line.split()
-            k = words[0]
-            v = float(words[1])
-            if firstTime:
-                minValue = v
-                maxValue = v
-            d[k] = v
-            if v < minValue:
-                minValue = v
-            if v > maxValue:
-                maxValue = v
-            firstTime = False
-        toWrite = []
-        for k in d:
-            normalizedValue = (d[k] - minValue) / (maxValue - minValue)
-            toWrite.append(k + ' ' + str(normalizedValue))
-        fout = open(outputFolder + '/' + f + '.txt', 'w')
-        fout.write('\n'.join(toWrite) + '\n')
-        fout.close()
-
-
 def getListOfAllFeatures(folder='features'):
     """ Return the list of available features.
         Args:
@@ -1369,12 +1336,16 @@ def runExperiment(experimentName, ids_train, ids_test, features, library,
     trainFile = folder + '/train.txt'
     testFile = folder + '/test.txt'
     predictionsFile = '%s/predictions-%s.csv.gz' % (folder, experimentName)
+
     if createTrainTest is None:
         createTrainTest = not (os.path.exists(trainFile) and
                                os.path.exists(testFile))
     if createTrainTest:
-        createFeatureFiles(ids_train, features, library, trainFile)
-        createFeatureFiles(ids_test, features, library, testFile)
+        normalize = library == 'liblinear'
+        createFeatureFiles(ids_train, features, library, trainFile,
+                           normalize=normalize)
+        createFeatureFiles(ids_test, features, library, testFile,
+                           normalize=normalize)
 
     computePredictions(library, parameters, trainFile, testFile,
                        predictionsFile, ids_test)
@@ -1388,27 +1359,31 @@ def testCrossValidation():
     test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
     allFeatures = getListOfAllFeatures()
 
-    if False:
+    scores = []
+    if True:
         # Testing with liblinear.
-        features = allFeatures[:2]
+        features = allFeatures[:10]
         parameters = {
             'train': ['-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
             'predict': ['-b', '1']}
         score = runExperiment(
             'lib-1', train_ids, test_ids, features, 'liblinear', parameters,
-            predictionScores=True)
+            createTrainTest=True, predictionScores=True)
         print score
+        scores.append(score)
 
-    # Testing with vowpal-wabbit.
-    features = allFeatures[:10]
-    parameters = {
-        'train': [],
-        'predict': ['--loss_function', 'quantile']}
-    score = runExperiment(
-        'vw-1', train_ids, test_ids, features, 'vw', parameters,
-        createTrainTest=True, predictionScores=True)
-
-    print score
+    if True:
+        # Testing with vowpal-wabbit.
+        features = allFeatures[:10]
+        parameters = {
+            'train': [],
+            'predict': ['--loss_function', 'quantile']}
+        score = runExperiment(
+            'vw-1', train_ids, test_ids, features, 'vw', parameters,
+            createTrainTest=True, predictionScores=True)
+        print score
+        scores.append(score)
+    print scores
 
 
 def main():
