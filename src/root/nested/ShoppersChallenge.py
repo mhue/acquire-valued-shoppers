@@ -1408,8 +1408,8 @@ def testCrossValidation():
                     '-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
                 'predict': ['-b', '1']}
             score = runExperiment(
-                experimentName, train_ids, test_ids, features, 'liblinear', parameters,
-                predictionScores=True)
+                experimentName, train_ids, test_ids, features, 'liblinear',
+                parameters, predictionScores=True)
             print score
             scores.append(score)
 
