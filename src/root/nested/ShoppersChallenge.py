@@ -182,7 +182,7 @@ def computeTransactionsSubset():
     brands = dict(zip(brand_of_offer.values(), [0] * len(brand_of_offer)))
 
     fin = gzip.GzipFile('transactions.csv.gz')
-    fout = gzip.GzipFile('transactions_subset.csv.gz', 'w')
+    fout = gzip.GzipFile('transactions_subset.csv.gz', 'wb')
     cr = csv.reader(fin)
     header = cr.next()
     fout.write(','.join(header) + '\n')
@@ -354,7 +354,7 @@ def computeFeaturesFirstPass():
     company_category_brand_60 = dict(zip(ids, [0] * n))
     company_category_brand_180 = dict(zip(ids, [0] * n))
 
-    fid = gzip.GzipFile('transactions_subset.csv.gz', 'rU')
+    fid = gzip.GzipFile('transactions_subset.csv.gz', 'rb')
     transactions = csv.reader(fid)
     header = transactions.next()
 
@@ -824,7 +824,7 @@ def computeFeaturesSecondPass():
     total_q_60 = dict(zip(ids, [0] * n))
     total_q_180 = dict(zip(ids, [0] * n))
 
-    fid = gzip.GzipFile('transactions.csv.gz', 'rU')
+    fid = gzip.GzipFile('transactions.csv.gz', 'rb')
     transactions = csv.reader(fid)
     header = transactions.next()
 
@@ -1195,7 +1195,7 @@ def parseLiblinearResults(ids, resultsFile, predictionsFile):
     t = [header]
     for i in range(n):
         t.append(ids[i] + ',' + lines[i].split()[1])
-    fid = gzip.GzipFile(predictionsFile, 'w')
+    fid = gzip.GzipFile(predictionsFile, 'wb')
     fid.write('\n'.join(t) + '\n')
     fid.close()
 
@@ -1214,7 +1214,7 @@ def parseVowpalWabbitResults(resultsFile, predictionsFile):
     for line in lines:
         probability, ID = line.strip().split()
         t.append('%s,%s' % (ID, probability))
-    fid = gzip.GzipFile(predictionsFile, 'w')
+    fid = gzip.GzipFile(predictionsFile, 'wb')
     fid.write('\n'.join(t) + '\n')
     fid.close()
 
@@ -1326,7 +1326,7 @@ def computeAUCScores(predictionsFile):
     true_values = []
     probabilities = []
     targets = readTargets()
-    process_results_file = gzip.GzipFile(predictionsFile, 'r')
+    process_results_file = gzip.GzipFile(predictionsFile, 'rb')
     process_results = csv.reader(process_results_file)
     process_results.next()  # Skip the header.
     for row in process_results:
@@ -1394,29 +1394,36 @@ def testCrossValidation():
     if True:
         # Testing with liblinear.
         for nf in [1, 3, 10, 40]:
+            experimentName = 'lib-%d' % nf
             features = allFeatures[:nf]
             parameters = {
                 'train': [
                     '-s', '0', '-w0', '43438', '-w1', '116619', '-B', '1'],
                 'predict': ['-b', '1']}
             score = runExperiment(
-                'lib-1', train_ids, test_ids, features, 'liblinear', parameters,
-                createTrainTest=True, predictionScores=True)
+                experimentName, train_ids, test_ids, features, 'liblinear', parameters,
+                predictionScores=True)
             print score
             scores.append(score)
 
     if True:
         # Testing with vowpal-wabbit.
         for nf in [1, 3, 10, 40]:
+            experimentName = 'vw-%d' % nf
             features = allFeatures[:nf]
             parameters = {
                 'train': [],
                 'predict': ['--loss_function', 'quantile']}
             score = runExperiment(
-                'vw-1', train_ids, test_ids, features, 'vw', parameters,
-                createTrainTest=True, predictionScores=True)
+                experimentName, train_ids, test_ids, features, 'vw', parameters,
+                predictionScores=True)
             print score
             scores.append(score)
+    # should print
+    # [0.58016748881760205, 0.5802018899415875,
+    # 0.62438185968961291,0.59184900276976948,
+    # 0.58017677030381398, 0.58020256228644451,
+    # 0.61788261467555416, 0.60207036194210628]
     print scores
 
 
