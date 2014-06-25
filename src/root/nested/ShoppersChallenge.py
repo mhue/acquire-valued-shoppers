@@ -207,12 +207,19 @@ def computeTransactionsSubset():
     fout.close()
 
 
-def computeFeaturesFirstPass():
+def computeFeaturesFirstPass(folder='features'):
     """
     Create the first features.
+
     Those features are quick to compute, because only 10 % of the transactions
     are needed.
+
+    Args:
+        folder: the folder where the features files are saved.
     """
+
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
     readOffers()
     readShoppers()
