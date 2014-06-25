@@ -1,0 +1,302 @@
+
+Description of the features
+---------------------------
+
+Features computed from a subset of transactions (those with a known company, category or brand)
+-----------------------------------------------------------------------------------------------
+
+company_b: whether the customer has bought from the company of the offer.
+company_n: number of times the shopper has bought from the company of the offer
+company_a: total amount the shopper spent on the company of the offer
+company_q: total number of items the shopper bought on the company of the offer
+company_qm_<measure>: total number of items the shopper bought on the company of the offer, with a given <measure>
+company_30: number of times the shopper has bought from the company of the offer in the last 30 days
+company_60: number of times the shopper has bought from the company of the offer in the last 60 days
+company_180: number of times the shopper has bought from the company of the offer in the last 180 days
+
+category_b: whether the customer has bought from the category of the offer.
+category_n: number of times the shopper has bought from the category of the offer
+category_a: total amount the shopper spent on the category of the offer
+category_q: total number of items the shopper bought on the category of the offer
+category_qm_<measure>: total number of items the shopper bought on the category of the offer, with a given <measure>
+category_30: number of times the shopper has bought from the category of the offer in the last 30 days
+category_60: number of times the shopper has bought from the category of the offer in the last 60 days
+category_180: number of times the shopper has bought from the category of the offer in the last 180 days
+
+brand_b: whether the customer has bought from the brand of the offer.
+brand_n: number of times the shopper has bought from the brand of the offer
+brand_a: total amount the shopper spent on the brand of the offer
+brand_q: total quantity the shopper spent on the brand of the offer
+brand_qm_<measure>: total quantity the shopper spent on the brand of the offer, with a given <measure>
+brand_30: number of times the shopper has bought from the brand of the offer in the last 30 days
+brand_60: number of times the shopper has bought from the brand of the offer in the last 60 days
+brand_180: number of times the shopper has bought from the brand of the offer in the last 180 days
+
+
+Same group of features, using company and brand at the same time, etc.
+
+company_brand_b: whether the customer has bought from the company and from the brand of the offer.
+company_category_b: whether the customer has bought from the company and from the category of the offer.
+category_brand_b: whether the customer has bought from the category and from the brand of the offer.
+company_category_brand_b: whether the customer has bought from the company, category and brand of the offer.
+
+
+Features computed from the whole set of transactions
+----------------------------------------------------
+
+total_b: whether the shopper has made a transaction.
+total_n: the number of transactions the shopper has made.
+total_qm_<measure>: the total amount the shopper has spent in items with a given <measure>
+
+total_a: the total amount the shopper has spent.
+total_a_30: the total amount the shopper has spent in the 30 days before the offer.
+total_a_60: the total amount the shopper has spent in the 60 days before the offer.
+total_a_180: the total amount the shopper has spent in the 180 days before the offer.
+
+total_q: the total number of items the shopper bought.
+total_q_30: the total number of items the shopper bought in the 30 days before the offer.
+total_q_60: the total number of items the shopper bought in the 60 days before the offer.
+total_q_180: the total number of items the shopper bought in the 180 days before the offer.
+
+total_d: number of different days the shopper made a transaction
+total_d_30: number of different days the shopper made a transaction, in the last 30 days.
+total_d_60: number of different days the shopper made a transaction, in the last 60 days.
+total_d_180: number of different days the shopper made a transaction, in the last 180 days.
+
+total_30: number of transactions made in the last 30 days.
+total_60:  number of transactions made in the last 60 days.
+total_180: number of transactions made in the last 180 days.
+
+offer_value: the offer value
+offer_quantity: the number of items in the offer.
+
+average_transaction_a: average amount per transaction
+average_transaction_a_30: average amount per transaction, in the last 30 days.
+average_transaction_a_60: average amount per transaction, in the last 60 days.
+average_transaction_a_180: average amount per transaction, in the last 180 days.
+
+average_transaction_q: average quantity of items per transaction
+average_transaction_q_30: average quantity of items per transaction in the last 30 days
+average_transaction_q_60: average quantity of items per transaction in the last 60 days
+average_transaction_q_180: average quantity of items per transaction in the last 180 days
+
+average_day_a: average amout spent per day
+average_day_a_30: average amout spent per day, in the last 30 days 
+average_day_a_60: average amout spent per day, in the last 60 days 
+average_day_a_180: average amout spent per day, in the last 180 days 
+
+average_day_q: average number of items bought per day
+average_day_q_30: average number of items bought per day, in the last 30 days
+average_day_q_60: average number of items bought per day, in the last 60 days
+average_day_q_180: average number of items bought per day, in the last 180 days
+
+-------------------------------------------------------
+
+Number of features.
+
+- from the reduced set: 133 
+
+- from the whole set:
+
+    second pass: 19 
+    related to the offer: 2
+    related to the average: 15
+    average: 16
+
+
+-------------------------------------------------------
+
+OFFER / number of occurences in the transactions / product measure
+
+occurence of an offer = of its company, brand, category
+
+1208501 0   set([])
+1200578 0   set([])
+1219903 0   set([])
+1221663 0   set([])
+1204822 0   set([])
+1221665 0   set([])
+1221667 0   set([])
+1221666 0   set([])
+1208251 0   set([])
+1198275 0   set([])
+1198274 0   set([])
+1198273 0   set([])
+1198272 0   set([])
+1200581 0   set([])
+1199258 0   set([])
+1220503 0   set([])
+
+1200579 9725    set(['OZ'])
+1194044 969615  set(['OZ'])
+1208503 7282    set(['OZ'])
+1219900 287     set(['OZ'])
+1208329 45277   set(['OZ'])
+1203439 45604   set(['OZ'])
+1204576 423510  set(['OZ'])
+1204821 155     set(['OZ'])
+1213242 497     set(['OZ'])
+1197502 131492  set(['OZ'])
+1208252 749     set(['OZ'])
+1203052 25138   set(['OZ'])
+1230218 76620   set(['OZ'])
+1198271 2251    set(['OZ'])
+1190530 2707    set(['LT'])
+1200584 4281    set(['OZ'])
+1221658 309145  set(['OZ'])
+1200582 4457    set(['CT'])
+1200988 259409  set(['OZ'])
+1220502 21261   set(['OZ'])
+1199256 57818   set(['OZ'])
+
+
+
+
+  OFFER       DATES                       TRANS.  TRAIN   TEST
+  
+* 1199256     2013-03-13 - 2013-03-28     x       x           
+* 1199258     2013-03-13 - 2013-03-31             x           
+  
+* 1200578     2013-03-30 - 2013-04-10             x           
+* 1200579     2013-03-30 - 2013-04-19     x       x           
+  
+  1194044     2013-03-01 - 2013-04-10     x       x           
+  1200988     2013-03-15 - 2013-04-12     x       x           
+  1203052     2013-04-01 - 2013-04-22     x       x           
+  1197502     2013-03-25 - 2013-04-25     x       x           
+
+* 1208252     2013-04-22 - 2013-05-02     x       x       x   
+* 1208251     2013-04-22 - 2013-05-04             x       x   
+
+  1208329     2013-04-22 - 2013-05-10     x       x       x   
+  1204576     2013-04-04 - 2013-05-10     x       x       x   
+  
+* 1208501     2013-04-23 - 2013-05-16             x       x   
+* 1208503     2013-04-24 - 2013-06-12     x       x       x   
+  
+* 1204822     2013-04-01 - 2013-05-07             x       x   
+* 1204821     2013-04-01 - 2013-05-16     x       x       x   
+  
+* 1200581     2013-03-29 - 2013-06-03             x       x   
+* 1200582     2013-03-29 - 2013-06-11     x       x       x   
+
+  1190530     2013-05-07 - 2013-06-03     x               x   
+  
+* 1198275     2013-03-25 - 2013-06-04             x       x   
+* 1198274     2013-03-25 - 2013-06-04             x       x   
+* 1198273     2013-03-25 - 2013-06-04             x       x   
+* 1198272     2013-03-25 - 2013-06-04             x       x   
+* 1198271     2013-03-25 - 2013-06-04     x       x       x   
+  
+  1203439     2013-05-11 - 2013-06-10     x               x   
+  1200584     2013-03-30 - 2013-06-16     x       x       x   
+  
+* 1221663     2013-06-20 - 2013-06-30                     x   
+* 1221665     2013-06-20 - 2013-06-30                     x   
+* 1221667     2013-06-20 - 2013-06-30                     x   
+* 1221666     2013-06-20 - 2013-06-30                     x   
+* 1221658     2013-06-20 - 2013-06-30     x               x   
+  
+  1213242     2013-05-20 - 2013-07-03     x               x   
+
+* 1220503     2013-07-01 - 2013-07-26                     x   
+* 1220502     2013-07-01 - 2013-07-30     x               x   
+  
+* 1219903     2013-06-27 - 2013-07-29                     x   
+* 1219900     2013-06-27 - 2013-07-29     x               x   
+  
+  1230218     2013-07-24 - 2013-07-31     x               x   
+
+
+train \ test    NO  YES
+NO      0   13  
+YES     8   16  
+
+-------------------------------------------------------
+
+(brand, category, company) -> list of offers
+
+('875', '3509', '103320030')    ['1200988']
+('15889', '5616', '104610040')  ['1204576']
+('17286', '799', '1076211171')  ['1219900', '1219903']
+('7668', '3504', '104460040')   ['1200584']
+('102504', '5619', '107717272')     ['1204821', '1204822']
+('6732', '9909', '107127979')   ['1194044']
+('93904', '9115', '108500080')  ['1190530']
+('6926', '2119', '108079383')   ['1208329']
+('7668', '1703', '104460040')   ['1200578', '1200579']
+('28840', '9909', '1089520383')     ['1203052']
+('64486', '6202', '1087744888')     ['1208501', '1208503']
+('17311', '5122', '107106878')  ['1203439']
+('13474', '3203', '106414464')  ['1197502']
+('26189', '706', '104127141')   ['1230218']
+('26456', '5824', '105190050')  ['1213242']
+('5072', '5558', '107120272')   ['1198271', '1198272', '1198273', '1198274', '1198275']
+('4294', '7205', '103700030')   ['1221658', '1221663', '1221665', '1221666', '1221667']
+('3718', '2202', '104460040')   ['1208251', '1208252']
+('13791', '4401', '105100050')  ['1199256', '1199258']
+('7668', '1726', '104460040')   ['1200581', '1200582']
+('1322', '4517', '105450050')   ['1220502', '1220503']
+
+-------------------------------------------------------
+
+Cumulative number of offers with respect to date, in the training set
+
+2013-03-01 1179     0.00736612581768
+2013-03-02 2179     0.0136139000481
+2013-03-03 2924     0.0182684918498
+2013-03-04 3521     0.0219984130653
+2013-03-05 4017     0.0250973090836
+2013-03-06 4322     0.0270028802239
+2013-03-12 4622     0.028877212493
+2013-03-13 8002     0.0499946893919
+2013-03-14 10574    0.0660639647126
+2013-03-15 13309    0.0831516272328
+2013-03-16 15656    0.0978151533516
+2013-03-17 17320    0.108211449671
+2013-03-18 17752    0.110910488139
+2013-03-19 18084    0.112984749183
+2013-03-20 18397    0.114940302517
+2013-03-21 18667    0.116627201559
+2013-03-22 19428    0.121381757749
+2013-03-23 20249    0.126511180392
+2013-03-24 20654    0.129041528955
+2013-03-25 31576    0.1972797191
+2013-03-26 41001    0.256164991222
+2013-03-27 48897    0.305497416545
+2013-03-28 53972    0.337204870765
+2013-03-29 58912    0.368068875463
+2013-03-30 64739    0.404474655904
+2013-03-31 66292    0.414177449284
+2013-04-01 72463    0.45273246406
+2013-04-02 77497    0.484183759536
+2013-04-03 81654    0.510155757012
+2013-04-04 86234    0.538770562987
+2013-04-05 90387    0.564717569366
+2013-04-06 94560    0.590789531229
+2013-04-07 98241    0.613787588172
+2013-04-08 100311   0.626720480829
+2013-04-09 101530   0.634336517616
+2013-04-10 102294   0.639109817128
+2013-04-11 102877   0.642752269504
+2013-04-12 103480   0.646519677365
+2013-04-13 104104   0.650418288485
+2013-04-14 104664   0.653917042054
+2013-04-15 105052   0.656341178455
+2013-04-16 106062   0.662651430428
+2013-04-17 107203   0.669780140825
+2013-04-18 108302   0.676646444704
+2013-04-19 109341   0.683137882129
+2013-04-20 110396   0.689729283943
+2013-04-21 111383   0.695895837108
+2013-04-22 117004   0.731014576057
+2013-04-23 124558   0.778210262594
+2013-04-24 133602   0.834715132734
+2013-04-25 140701   0.879068081996
+2013-04-26 146576   0.9157737556
+2013-04-27 151746   0.948074748371
+2013-04-28 156249   0.976208475731
+2013-04-29 158638   0.991134408367
+2013-04-30 160057   1.0
+
+
