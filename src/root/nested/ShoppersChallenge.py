@@ -1269,12 +1269,15 @@ def getListOfAllFeatures(folder='features', force=False):
     """ Return the list of available features.
 
         The constant features are discarded.
-        featuresList.txt is used as a cache.
+        The list is sorted.
+        allFeatures.txt is used as a cache.
         Args:
             folder: the folder containing the feature files.
             force: if True, ignore the cache.
     """
-    cache = 'featuresList.txt'
+    if not os.path.exists('features_sets'):
+        os.makedirs('features_sets')
+    cache = 'features_sets/allFeatures.txt'
     doIt = force or not os.path.exists(cache)
     if doIt:
         featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
@@ -1287,6 +1290,7 @@ def getListOfAllFeatures(folder='features', force=False):
                 features.append(allFeatures[i])
             else:
                 print allFeatures[i], 'is constant.'
+        features.sort()
         fid = open(cache, 'w')
         fid.write('\n'.join(features))
         fid.close()
@@ -1298,7 +1302,7 @@ def getListOfAllFeatures(folder='features', force=False):
 def getListFeatures(listFile, folder='features'):
     """ Return the list of available features."""
     features = []
-    fid = open(listFile)
+    fid = open('features_sets/%s.txt' % listFile)
     allFeaturesFound = True
     for line in fid:
         f = line.strip()
@@ -1308,11 +1312,18 @@ def getListFeatures(listFile, folder='features'):
         if not os.path.exists(featureFile):
             print >> sys.stderr, 'could not find %s' % featureFile
         allFeaturesFound &= os.path.exists(featureFile)
-        features.append(line)
+        features.append(f)
     fid.close()
     if allFeaturesFound:
         return features
     return []
+
+
+def getAllFeaturesSets():
+    """ Return the list of features sets."""
+
+    files = glob.glob('features_sets/*.txt')
+    return [f.split('/')[1][:-4] for f in files]
 
 
 def checkFeatures(features):
@@ -1391,16 +1402,15 @@ def runExperiment(experimentName, ids_train, ids_test, features, library,
     if predictionScores:
         return computeAUCScores(predictionsFile)
 
-
 def testCrossValidation():
     train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
     test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
     allFeatures = getListOfAllFeatures()
 
     scores = []
-    if True:
+    if False:
         # Testing with liblinear.
-        for nf in [1, 3, 10, 40]:
+        for nf in [1, 3, 10, 40, 117]:
             experimentName = 'lib-%d' % nf
             features = allFeatures[:nf]
             parameters = {
@@ -1413,9 +1423,9 @@ def testCrossValidation():
             print score
             scores.append(score)
 
-    if True:
+    if False:
         # Testing with vowpal-wabbit.
-        for nf in [1, 3, 10, 40]:
+        for nf in [1, 3, 10, 40, 117]:
             experimentName = 'vw-%d' % nf
             features = allFeatures[:nf]
             parameters = {
@@ -1426,12 +1436,25 @@ def testCrossValidation():
                 predictionScores=True)
             print score
             scores.append(score)
-    # should print
-    # [0.58016748881760205, 0.5802018899415875,
-    # 0.62438185968961291,0.59184900276976948,
-    # 0.58017677030381398, 0.58020256228644451,
-    # 0.61788261467555416, 0.60207036194210628]
-    print scores
+
+    if True:
+        # Using feature sets.
+        getListOfAllFeatures()
+        features_sets = getAllFeaturesSets()
+        scoresDictionary = {}
+        for fs in features_sets:
+            experimentName = 'vw-%s' % fs
+            features = getListFeatures(fs)
+            parameters = {
+                'train': [],
+                'predict': ['--loss_function', 'quantile']}
+            score = runExperiment(
+                experimentName, train_ids, test_ids, features, 'vw', parameters,
+                predictionScores=True)
+            scoresDictionary[fs] = score
+
+        for k in scoresDictionary:
+            print '%s: %f' % (k, scoresDictionary[k])
 
 
 def main():
