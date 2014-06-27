@@ -1278,7 +1278,7 @@ def getListOfAllFeatures(folder='features', force=False):
     if not os.path.exists('features_sets'):
         os.makedirs('features_sets')
     cache = 'features_sets/allFeatures.txt'
-    doIt = force or not os.path.exists(cache)
+    doIt = force or (not os.path.exists(cache)) or os.stat(cache).st_size == 0
     if doIt:
         featuresFiles = [p for p in glob.glob(folder + '/*.txt')]
         allFeatures = [p.split('/')[-1][:-4] for p in featuresFiles]
