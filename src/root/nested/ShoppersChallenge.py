@@ -1247,8 +1247,8 @@ def computePredictions(library, parameters, trainFile, testFile,
     modelFile = trainFile + '.model'
     resultsFile = testFile + '.results'
     if library == 'liblinear':
-        c = ['liblinear-train'] + parameters['train'] + [trainFile, modelFile]
-        c2 = ['liblinear-predict'] + parameters['predict'] + [
+        c = ['train'] + parameters['train'] + [trainFile, modelFile]
+        c2 = ['predict'] + parameters['predict'] + [
             testFile,
             modelFile,
             resultsFile]
@@ -1402,13 +1402,14 @@ def runExperiment(experimentName, ids_train, ids_test, features, library,
     if predictionScores:
         return computeAUCScores(predictionsFile)
 
+
 def testCrossValidation():
     train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
     test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
     allFeatures = getListOfAllFeatures()
 
     scores = []
-    if False:
+    if True:
         # Testing with liblinear.
         for nf in [1, 3, 10, 40, 117]:
             experimentName = 'lib-%d' % nf
