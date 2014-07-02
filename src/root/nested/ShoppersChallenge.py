@@ -62,7 +62,8 @@ brand_of_shopper = {}
 offer_value_of_shopper = {}
 offer_quantity_of_shopper = {}
 date_of_shopper = {}
-
+market_of_shopper = {}
+chain_of_shopper = {}
 
 def readShoppers():
     for phase in ['train', 'test']:
@@ -72,10 +73,14 @@ def readShoppers():
         IDIndex = header.index('id')
         offerIndex = header.index('offer')
         dateIndex = header.index('offerdate')
+        marketIndex = header.index('market') 
+        chainIndex = header.index('chain')
         for row in cr:
             ID = row[IDIndex]
             offer = row[offerIndex]
             date = row[dateIndex]
+            market = row[marketIndex] 
+            chain = row[chainIndex]
             company_of_shopper[ID] = company_of_offer[offer]
             category_of_shopper[ID] = category_of_offer[offer]
             brand_of_shopper[ID] = brand_of_offer[offer]
@@ -83,6 +88,8 @@ def readShoppers():
             offer_quantity_of_shopper[ID] = float(
                 offer_quantity_of_offer[offer])
             date_of_shopper[ID] = date
+            market_of_shopper[ID] = market
+            chain_of_shopper[ID] = chain
         fid.close()
 
 
@@ -360,6 +367,7 @@ def computeFeaturesFirstPass(folder='features'):
     company_category_brand_30 = dict(zip(ids, [0] * n))
     company_category_brand_60 = dict(zip(ids, [0] * n))
     company_category_brand_180 = dict(zip(ids, [0] * n))
+    company_category_brand_last_year = dict(zip(ids, [0] * n))
 
     fid = gzip.GzipFile('transactions_subset.csv.gz', 'rb')
     transactions = csv.reader(fid)
@@ -639,6 +647,9 @@ def computeFeaturesFirstPass(folder='features'):
                 company_category_brand_60[ID] += 1
             if dt <= 180:
                 company_category_brand_180[ID] += 1
+            if dt <= 365+14 and dt >= 365-14:
+                company_category_brand_last_year = 1
+            
 
         N = 1000000
         if steps % N == 0:
@@ -782,8 +793,8 @@ def computeFeaturesFirstPass(folder='features'):
     saveIt(company_category_brand_30, 'company_category_brand_30.txt')
     saveIt(company_category_brand_60, 'company_category_brand_60.txt')
     saveIt(company_category_brand_180, 'company_category_brand_180.txt')
-
-
+    saveIt(company_category_brand_last_year, 'company_category_brand_last_year.txt')
+    
 def computeFeaturesSecondPass():
     """
     Those features are slower to compute, because all of the transactions are
@@ -951,10 +962,14 @@ def computeFeaturesThirdPass():
     readShoppers()
 
     ids = getIds('train') + getIds('test')
+    ids_train = getIds('train')
     n = len(ids)
 
     offer_value = dict(zip(ids, [0] * n))
     offer_quantity = dict(zip(ids, [0] * n))
+    offer_value_inv = dict(zip(ids, [0] * n))
+    offer_day = dict(zip(ids, [0] * n))
+    offer_week = dict(zip(ids, [0] * n))
     total_30 = dict(zip(ids, [0] * n))
     total_60 = dict(zip(ids, [0] * n))
     total_180 = dict(zip(ids, [0] * n))
@@ -974,10 +989,46 @@ def computeFeaturesThirdPass():
     average_day_q_30 = dict(zip(ids, [0] * n))
     average_day_q_60 = dict(zip(ids, [0] * n))
     average_day_q_180 = dict(zip(ids, [0] * n))
-
+    market_imp = dict(zip(ids, [0] * n))
+    
+    target_of_shopper = readTargets()
+    market_total_returns = dict()
+    market_sum = dict()
+    
+    steps=0
+    
     for shopper in ids:
+        N = 10000
+        if steps % N == 0:
+            print >> sys.stderr, steps / N,
+        steps += 1
+        
         offer_value[shopper] = offer_value_of_shopper[shopper]
         offer_quantity[shopper] = offer_quantity_of_shopper[shopper]
+        offer_value_inv[shopper] = 1 / offer_value_of_shopper[shopper]
+        
+        dt = time_between_dates('2013-03-01', date_of_shopper[shopper]) #reference day is Saturday
+        offer_day[shopper] = (dt+1) % 7 - 1 + 6
+        offer_week[shopper] = (dt / 7) % 4
+        
+        #impact coding for variable(s): market        
+        if shopper not in ids_train:
+            continue
+        market = market_of_shopper[shopper]
+        if market in market_sum:
+            market_sum[market] += 1
+            market_total_returns[market] += target_of_shopper[shopper]
+        else:
+            market_sum[market] = 1
+            market_total_returns[market] = target_of_shopper[shopper]
+        
+    for shopper in ids:
+        market = market_of_shopper[shopper]
+        market_imp[shopper] = float(market_total_returns[market]/market_sum[market])
+    '''
+    TBD:
+    do the same with chain, dept
+    '''
 
     total_a = loadIt('total_a', valueType='float')
     total_a_30 = loadIt('total_a_30', valueType='float')
@@ -1073,6 +1124,9 @@ def computeFeaturesThirdPass():
 
     saveIt(offer_value, 'offer_value.txt')
     saveIt(offer_quantity, 'offer_quantity.txt')
+    saveIt(offer_value_inv, 'offer_value_inv.txt')
+    saveIt(offer_day, 'offer_day.txt')
+    saveIt(offer_week, 'offer_week.txt')
     saveIt(average_transaction_a, 'average_transaction_a.txt')
     saveIt(average_transaction_a_30, 'average_transaction_a_30.txt')
     saveIt(average_transaction_a_60, 'average_transaction_a_60.txt')
@@ -1089,7 +1143,8 @@ def computeFeaturesThirdPass():
     saveIt(average_day_q_30, 'average_day_q_30.txt')
     saveIt(average_day_q_60, 'average_day_q_60.txt')
     saveIt(average_day_q_180, 'average_day_q_180.txt')
-
+    saveIt(market_imp, 'market_imp.txt')
+    
 
 def readTargets():
     target_of_shopper = {}
@@ -1461,14 +1516,14 @@ def testCrossValidation():
 def main():
 
 # Uncomment to re-compute the features.
-#     computeTransactionsSubset()
-#      computeFeaturesFirstPass()
-#     computeFeaturesSecondPass()
-#     computeFeaturesThirdPass()
+    #computeTransactionsSubset()
+    #computeFeaturesFirstPass()
+    computeFeaturesSecondPass()    
+    computeFeaturesThirdPass()
 
     getListOfAllFeatures()
-
-    testCrossValidation()
+    
+#    testCrossValidation()
 
 
 if __name__ == '__main__':
