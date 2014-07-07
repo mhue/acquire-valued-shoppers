@@ -12,7 +12,7 @@ import gzip
 
 import pandas as pd
 from sklearn.metrics import roc_auc_score
-from sklearn import svm
+from sklearn import svm, linear_model
 import numpy as np
 
 
@@ -1486,13 +1486,14 @@ def featureSelection(limitIDs=None, limit=None):
     features = getListOfAllFeatures()
     if limit is not None:
         features = features[:limit]
+
     if not os.path.exists('features_selection'):
         os.makedirs('features_selection')
     if not os.path.exists('features_selection/cache'):
         os.makedirs('features_selection/cache')
 
-    train_ids = getTrainingSubsetIds('2013-03-01', '2013-03-02')
-    test_ids = getTrainingSubsetIds('2013-04-07', '2013-04-08')
+    train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
+    test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
     target_of_shopper = readTargets2()
 
     if limitIDs is not None:
@@ -1503,7 +1504,7 @@ def featureSelection(limitIDs=None, limit=None):
     testDataFrame = getDataFrame(test_ids, features)
     targets = [target_of_shopper[ID] for ID in train_ids]
     true_values = [target_of_shopper[ID] for ID in test_ids]
-    s = features
+    s = range(len(features))
 
     while True:
         n = len(s)
@@ -1512,20 +1513,21 @@ def featureSelection(limitIDs=None, limit=None):
         scores = [0] * n
         for i in range(n):
 
-            I = range(i) + range(i+1, n)
-            svc = svm.LinearSVC()
-            model = svc.fit(trainDataFrame.iloc[:, I], targets)
-            predictions = model.decision_function(testDataFrame.iloc[:, I])
-            scores[i] = roc_auc_score(np.array(true_values),
-                                      np.array(predictions))
-        print scores
+            I = s[:i] + s[i+1:]
+            # estimator = svm.LinearSVC(class_weight='auto')
+            estimator = linear_model.LogisticRegression(C=1e5)
+            model = estimator.fit(trainDataFrame.iloc[:, I], targets)
+            probabilities = model.predict_proba(testDataFrame.iloc[:, I])
+            predictions = [p[1] for p in probabilities]
+            scores[i] = roc_auc_score(true_values, predictions)
+        print sorted(scores)
 
         which = 0
-        bestScore = scores[0]
+        lowestScore = scores[0]
         for i in range(n):
-            if scores[i] > bestScore:
+            if scores[i] < lowestScore:
                 which = i
-                bestScore = scores[i]
+                lowestScore = scores[i]
         if which is not None:
             print 'Discarding feature ', s[which],
             print 'because without it, the score becomes', scores[which]
@@ -1558,7 +1560,7 @@ def testPredictions(limit=None, limitIDs=None):
 
     svc = svm.LinearSVC()
     model = svc.fit(trainDataFrame.iloc[:, [1]], targets)
-    predictions = model.decision_function(testDataFrame.iloc[:,[1]])
+    predictions = model.decision_function(testDataFrame.iloc[:, [1]])
     return predictions
 
 
@@ -1651,7 +1653,7 @@ def main():
     # Remove once featureSelection works.
     # p = testPredictions(limitIDs=5, limit=2)
 
-    featureSelection(limitIDs=5, limit=2)
+    featureSelection(limitIDs=100, limit=50)
 
 
 if __name__ == '__main__':
