@@ -10,8 +10,10 @@ import glob
 import subprocess
 import gzip
 
+import pandas as pd
 from sklearn.metrics import roc_auc_score
-import numpy
+from sklearn import svm
+import numpy as np
 
 
 class Error(Exception):
@@ -138,6 +140,12 @@ def loadIt(feature, valueType=None, folder='features'):
     return d
 
 
+def loadIt2(feature, valueType=None, folder='features'):
+    df = pd.read_csv(folder + '/' + feature + '.txt', delimiter=' ',
+                     header=None, index_col=0)
+    return df.to_dict()[1]
+
+
 def getIds(phase):
     fid = open(phase + 'History.csv', 'r')
     cr = csv.reader(fid)
@@ -149,19 +157,9 @@ def getIds(phase):
 
 def getTrainingSubsetIds(startDate='2013-03-01', endDate='2013-04-01'):
     """ Return a list of shoppers IDs with an offer in [startDate, endDate). """
-    ids = []
-    fid = open('trainHistory.csv')
-
-    cr = csv.reader(fid)
-    header = cr.next()
-    i = header.index('offerdate')
-    for row in cr:
-        ID = row[0]
-        date = row[i]
-        if startDate <= date < endDate:
-            ids.append(ID)
-    fid.close()
-    return ids
+    df = pd.read_csv('trainHistory.csv')
+    return list(df[(df['offerdate'] >= startDate) &
+                   (df['offerdate'] < endDate)]['id'].values)
 
 
 def computeTransactionsSubset():
@@ -1092,6 +1090,10 @@ def computeFeaturesThirdPass():
 
 
 def readTargets():
+    """
+    Returns a dictionary, with keys the string shopper IDs, and values a
+    boolean.
+    """
     target_of_shopper = {}
     fid = open('trainHistory.csv')
     cr = csv.reader(fid)
@@ -1107,6 +1109,16 @@ def readTargets():
     return target_of_shopper
 
 
+def readTargets2():
+    """
+    Returns a dictionary, with keys the shopper IDs, and values a
+    boolean.
+    """
+    return pd.read_csv('trainHistory.csv', index_col=0,
+                       usecols=['id', 'repeater'], true_values=['t'],
+                       false_values=['f']).to_dict()['repeater']
+
+
 def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
     """
     Creates a file corresponding to ids and features. 
@@ -1116,21 +1128,21 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
         features: a list of strings, the names of the features to use.
         libraryFormat: 'liblinear' or 'vw'
         outFile: a string.
-        
     The function creates intermediate files, one per feature, to fit in RAM.
+    They are stored in a folder with a name ending with '_temporary_files'.
     """
     target_of_shopper = readTargets()
     n = len(ids)
     nf = len(features)
 
-    # Normalize ~features only for liblinear.
+    # Normalize features only for liblinear.
     assert (libraryFormat == 'liblinear' and normalize) or \
         (libraryFormat != 'liblinear' and not normalize)
 
-    # Prepare for each feature.
     tmp_dir = outFile + '_temporary_files'
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
+
     for i in range(nf):
 
         print i, 'reading', features[i]
@@ -1151,7 +1163,8 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
 
         if normalize:
             toWrite = [
-                str((f[ID] - minValue) / (maxValue - minValue)) for ID in ids]
+                str((f[ID] - minValue) / (maxValue - minValue))
+                for ID in ids]
         else:
             toWrite = [str(f[ID]) for ID in ids]
         out = open('%s/%s.txt' % (tmp_dir, features[i]), 'w')
@@ -1403,13 +1416,159 @@ def runExperiment(experimentName, ids_train, ids_test, features, library,
         return computeAUCScores(predictionsFile)
 
 
+def runSklearnExperiments(experimentName, train_ids, test_ids, features,
+                          predictionScores=False):
+    """
+        Runs a series of experiments using scikit-learn.
+
+        experimentName: a string, the subfolder of 'experiments' containing
+            the necessary files for each step.
+        ids_train: list of ids, contained in the ids in trainHistory.csv
+        ids_test: list of ids for which we want a prediction.
+        features: a list of strings.
+        predictionScores: boolean.  If True, return a list of float.
+    """
+
+    nTrain = len(train_ids)
+    nTest = len(test_ids)
+    nFeatures = len(features)
+    X = [[0] * nFeatures for i in range(nTrain)]
+    XTest = [[0] * nFeatures for i in range(nTest)]
+    for j in range(nFeatures):
+        d = loadIt(features[j])
+        for i in range(nTrain):
+            X[i][j] = float(d[train_ids[i]])
+        for i in range(nTest):
+            XTest[i][j] = float(d[test_ids[i]])
+
+    target_of_shopper = readTargets2()
+    y = [0] * nTrain
+    for i in range(nTrain):
+        y[i] = float(target_of_shopper[train_ids[i]])
+
+    import sklearn.svm
+    svc = sklearn.svm.LinearSVC()
+    yPredicted = svc.fit(X, y).predict(XTest)
+    return 0
+
+
+def getDataFrame(ids, features):
+
+    data_dict = {}
+    for f in features:
+        print >>sys.stderr, 'reading', f
+        feature_dict = loadIt2(f)
+        v = [feature_dict[ID] for ID in ids]
+        data_dict[f] = v
+    res = pd.DataFrame(data_dict)
+    return res
+
+
+def getDataFrame2(ids, features):
+
+    data_dict = {}
+    for f in features:
+        print >>sys.stderr, 'reading', f
+        feature_dict = loadIt2(f)
+        v = [feature_dict[ID] for ID in ids]
+        data_dict[f] = v
+
+    return pd.DataFrame(data_dict)
+
+
+def featureSelection(limitIDs=None, limit=None):
+    """
+    Find a list of features with a high score.
+
+    Start with all available features, eliminate one feature at a time,
+    as long as the score improves.
+    """
+    features = getListOfAllFeatures()
+    if limit is not None:
+        features = features[:limit]
+    if not os.path.exists('features_selection'):
+        os.makedirs('features_selection')
+    if not os.path.exists('features_selection/cache'):
+        os.makedirs('features_selection/cache')
+
+    train_ids = getTrainingSubsetIds('2013-03-01', '2013-03-02')
+    test_ids = getTrainingSubsetIds('2013-04-07', '2013-04-08')
+    target_of_shopper = readTargets2()
+
+    if limitIDs is not None:
+        train_ids = map(int, train_ids[:limitIDs])
+        test_ids = map(int, test_ids[:limitIDs])
+
+    trainDataFrame = getDataFrame(train_ids, features)
+    testDataFrame = getDataFrame(test_ids, features)
+    targets = [target_of_shopper[ID] for ID in train_ids]
+    true_values = [target_of_shopper[ID] for ID in test_ids]
+    s = features
+
+    while True:
+        n = len(s)
+        if n == 1:
+            break
+        scores = [0] * n
+        for i in range(n):
+
+            I = range(i) + range(i+1, n)
+            svc = svm.LinearSVC()
+            model = svc.fit(trainDataFrame.iloc[:, I], targets)
+            predictions = model.decision_function(testDataFrame.iloc[:, I])
+            scores[i] = roc_auc_score(np.array(true_values),
+                                      np.array(predictions))
+        print scores
+
+        which = 0
+        bestScore = scores[0]
+        for i in range(n):
+            if scores[i] > bestScore:
+                which = i
+                bestScore = scores[i]
+        if which is not None:
+            print 'Discarding feature ', s[which],
+            print 'because without it, the score becomes', scores[which]
+            s = s[:which] + s[which+1:]
+        else:
+            break
+        
+
+def testPredictions(limit=None, limitIDs=None):
+
+    features = getListOfAllFeatures()
+    if limit is not None:
+        features = features[:limit]
+    if not os.path.exists('features_selection'):
+        os.makedirs('features_selection')
+    if not os.path.exists('features_selection/cache'):
+        os.makedirs('features_selection/cache')
+
+    train_ids = getTrainingSubsetIds('2013-03-01', '2013-03-02')
+    target_of_shopper = readTargets2()
+    test_ids = getTrainingSubsetIds('2013-04-07', '2013-04-08')
+
+    if limitIDs is not None:
+        train_ids = map(int, train_ids[:limitIDs])
+        test_ids = map(int, test_ids[:limitIDs])
+
+    targets = [target_of_shopper[ID] for ID in train_ids]
+    trainDataFrame = getDataFrame(train_ids, features)
+    testDataFrame = getDataFrame(test_ids, features)
+
+    svc = svm.LinearSVC()
+    model = svc.fit(trainDataFrame.iloc[:, [1]], targets)
+    predictions = model.decision_function(testDataFrame.iloc[:,[1]])
+    return predictions
+
+
 def testCrossValidation():
     train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
     test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
     allFeatures = getListOfAllFeatures()
 
     scores = []
-    if True:
+    if False:
         # Testing with liblinear.
         for nf in [1, 3, 10, 40, 117]:
             experimentName = 'lib-%d' % nf
@@ -1438,6 +1597,17 @@ def testCrossValidation():
             print score
             scores.append(score)
 
+    if False:
+        # Testing with scikit-learn.
+        for nf in [1, 3]:
+            experimentName = 'sklearn-%d' % nf
+            features = allFeatures[:nf]
+            score = runSklearnExperiments(
+                experimentName, train_ids, test_ids, features,
+                predictionScores=True)
+            print score
+            scores.append(score)
+
     if True:
         # Using feature sets.
         getListOfAllFeatures()
@@ -1458,17 +1628,30 @@ def testCrossValidation():
             print '%s: %f' % (k, scoresDictionary[k])
 
 
+def testSklearn():
+
+    experimentName = 'test-sklearn'
+    train_ids = ['86252', '12682470']
+    test_ids = ['86252']
+    features = ['average_day_a']
+    runSklearnExperiments(experimentName, train_ids, test_ids, features, True)
+
+
 def main():
 
 # Uncomment to re-compute the features.
 #     computeTransactionsSubset()
-#      computeFeaturesFirstPass()
+#     computeFeaturesFirstPass()
 #     computeFeaturesSecondPass()
 #     computeFeaturesThirdPass()
 
-    getListOfAllFeatures()
+    # testCrossValidation()
+    # testSklearn()
 
-    testCrossValidation()
+    # Remove once featureSelection works.
+    # p = testPredictions(limitIDs=5, limit=2)
+
+    featureSelection(limitIDs=5, limit=2)
 
 
 if __name__ == '__main__':
