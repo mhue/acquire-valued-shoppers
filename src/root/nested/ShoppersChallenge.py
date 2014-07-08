@@ -65,6 +65,7 @@ date_of_shopper = {}
 market_of_shopper = {}
 chain_of_shopper = {}
 
+
 def readShoppers():
     for phase in ['train', 'test']:
         fid = open(phase + 'History.csv')
@@ -154,7 +155,7 @@ def getIds(phase):
     return ids
 
 
-def getTrainingSubsetIds(startDate, endDate): #startDate='2013-03-01', endDate='2013-04-01'
+def getTrainingSubsetIds(startDate, endDate):
     """ Return a list of shoppers IDs with an offer in [startDate, endDate). """
     ids = []
     fid = open('trainHistory.csv')
@@ -647,9 +648,8 @@ def computeFeaturesFirstPass(folder='features'):
                 company_category_brand_60[ID] += 1
             if dt <= 180:
                 company_category_brand_180[ID] += 1
-            if dt <= 365+14 and dt >= 365-14:
+            if 365-14 <= dt <= 365+14:
                 company_category_brand_last_year = 1
-            
 
         N = 1000000
         if steps % N == 0:
@@ -793,15 +793,18 @@ def computeFeaturesFirstPass(folder='features'):
     saveIt(company_category_brand_30, 'company_category_brand_30.txt')
     saveIt(company_category_brand_60, 'company_category_brand_60.txt')
     saveIt(company_category_brand_180, 'company_category_brand_180.txt')
-    saveIt(company_category_brand_last_year, 'company_category_brand_last_year.txt')
+    saveIt(company_category_brand_last_year,
+           'company_category_brand_last_year.txt')
     
+
 def computeFeaturesSecondPass():
     """
     Those features are slower to compute, because all of the transactions are
     read.
 
     """
-    print 'Calculating 2nd phase. Iterating over transactions. Phase ends at 350.'
+    print 'Calculating 2nd phase. Iterating over transactions. ' \
+          'Phase ends at 350.'
 
     readOffers()
     readShoppers()
@@ -960,7 +963,8 @@ def computeFeaturesSecondPass():
 
 def computeFeaturesThirdPass():
     """
-    Calculating 3rd phase. Iterating over History (Train + Test). Phase ends at 31.'
+    Calculating 3rd phase. Iterating over History (Train + Test).
+    Phase ends at 31.'
     """
     print computeFeaturesThirdPass.__doc__
 
@@ -998,7 +1002,6 @@ def computeFeaturesThirdPass():
     market_imp = dict(zip(ids, [0] * n))
     chain_imp = dict(zip(ids, [0] * n))
     
-    
     target_of_shopper = readTargets()
     
     market_total_returns = dict()
@@ -1007,7 +1010,7 @@ def computeFeaturesThirdPass():
     chain_total_returns = dict()
     chain_sum = dict()
     
-    steps=0
+    steps = 0
 
     for shopper in ids:
         N = 10000
@@ -1019,7 +1022,9 @@ def computeFeaturesThirdPass():
         offer_quantity[shopper] = offer_quantity_of_shopper[shopper]
         offer_value_inv[shopper] = 1 / offer_value_of_shopper[shopper]
         
-        dt = time_between_dates('2013-03-01', date_of_shopper[shopper]) #reference day is Saturday
+        #reference day is Saturday
+        dt = time_between_dates('2013-03-01', date_of_shopper[shopper])
+
         offer_day[shopper] = (dt+1) % 7 - 1 + 6
         offer_week[shopper] = (dt / 7) % 4
         
@@ -1045,26 +1050,27 @@ def computeFeaturesThirdPass():
             chain_sum[chain] = 1
             chain_total_returns[chain] = target_of_shopper[shopper]
     
-    missing_chain_counter=0    
+    missing_chain_counter = 0
     for shopper in ids:
         market = market_of_shopper[shopper]
-        market_imp[shopper] = float(market_total_returns[market]) / market_sum[market]
+        market_imp[shopper] = (float(market_total_returns[market])
+                               / market_sum[market])
         chain = chain_of_shopper[shopper]
         if chain in chain_sum:
-            chain_imp[shopper] = float(chain_total_returns[chain]) / chain_sum[chain]
-            last_chain=chain #to be used for chains that exist in the test set but not in the train set (last chain will be used instead)
+            chain_imp[shopper] = (float(chain_total_returns[chain])
+                                  / chain_sum[chain])
+            last_chain = chain
+            # to be used for chains that exist in the test set
+            # but not in the train set (last chain will be used instead)
         else:
-            chain_imp[shopper] = float(chain_total_returns[last_chain]) / chain_sum[last_chain]
+            chain_imp[shopper] = (float(chain_total_returns[last_chain])
+                                  / chain_sum[last_chain])
             missing_chain_counter += 1
     
     print missing_chain_counter
             
-        
-    '''
-    TBD:
-    do the same with dept
-    '''
-        
+    # TODO: do the same with dept
+
     total_a = loadIt('total_a', valueType='float')
     total_a_30 = loadIt('total_a_30', valueType='float')
     total_a_60 = loadIt('total_a_60', valueType='float')
