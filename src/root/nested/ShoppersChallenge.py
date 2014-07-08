@@ -13,6 +13,7 @@ import gzip
 import pandas as pd
 from sklearn.metrics import roc_auc_score
 from sklearn import svm, linear_model
+from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 
 
@@ -1119,6 +1120,30 @@ def readTargets2():
                        false_values=['f']).to_dict()['repeater']
 
 
+def scaleFeatures():
+    """Scales each feature file."""
+    files = [f.split('/')[1] for f in glob.glob('features/*.txt')]
+    files.sort()
+    for f in files:
+        out = 'normalizedFeatures/' + f
+        if not os.path.exists(out):
+            print out
+            lines = open('features/' + f).readlines()
+            n = len(lines)
+            ids = [l.split()[0] for l in lines]
+            v = [float(l.split()[1]) for l in lines]
+            m = min(v)
+            M = max(v)
+            if m == M:
+                print f, 'constant feature.'
+                continue
+            nv = [str((val - m) / (M - m)) for val in v]
+            toWrite = [ids[i] + ' ' + nv[i] for i in range(n)]
+            fd = open(out, 'w')
+            fd.write('\n'.join(toWrite) + '\n')
+            fd.close()
+
+
 def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
     """
     Creates a file corresponding to ids and features. 
@@ -1455,25 +1480,16 @@ def runSklearnExperiments(experimentName, train_ids, test_ids, features,
 def getDataFrame(ids, features):
 
     data_dict = {}
+    print >>sys.stderr, 'reading',
     for f in features:
-        print >>sys.stderr, 'reading', f
+        print >>sys.stderr, f,
         feature_dict = loadIt2(f)
         v = [feature_dict[ID] for ID in ids]
         data_dict[f] = v
+    print >>sys.stderr
     res = pd.DataFrame(data_dict)
     return res
 
-
-def getDataFrame2(ids, features):
-
-    data_dict = {}
-    for f in features:
-        print >>sys.stderr, 'reading', f
-        feature_dict = loadIt2(f)
-        v = [feature_dict[ID] for ID in ids]
-        data_dict[f] = v
-
-    return pd.DataFrame(data_dict)
 
 
 def featureSelection(limitIDs=None, limit=None):
@@ -1484,6 +1500,7 @@ def featureSelection(limitIDs=None, limit=None):
     as long as the score improves.
     """
     features = getListOfAllFeatures()
+    # features = getListFeatures('only_qm')
     if limit is not None:
         features = features[:limit]
 
@@ -1498,30 +1515,62 @@ def featureSelection(limitIDs=None, limit=None):
 
     if limitIDs is not None:
         train_ids = map(int, train_ids[:limitIDs])
-        test_ids = map(int, test_ids[:limitIDs])
 
     trainDataFrame = getDataFrame(train_ids, features)
     testDataFrame = getDataFrame(test_ids, features)
-    targets = [target_of_shopper[ID] for ID in train_ids]
-    true_values = [target_of_shopper[ID] for ID in test_ids]
-    s = range(len(features))
+    targets = [int(target_of_shopper[ID]) for ID in train_ids]
+    true_values = [int(target_of_shopper[ID]) for ID in test_ids]
+    s = features
 
     while True:
         n = len(s)
         if n == 1:
             break
         scores = [0] * n
+        scores0 = [0] * n
+        scores1 = [0] * n
         for i in range(n):
 
             I = s[:i] + s[i+1:]
-            # estimator = svm.LinearSVC(class_weight='auto')
-            estimator = linear_model.LogisticRegression(C=1e5)
-            model = estimator.fit(trainDataFrame.iloc[:, I], targets)
-            probabilities = model.predict_proba(testDataFrame.iloc[:, I])
-            predictions = [p[1] for p in probabilities]
-            scores[i] = roc_auc_score(true_values, predictions)
-        print sorted(scores)
 
+            if True:
+                # LinearSVC
+
+                #HACK: without random_state
+                estimator = svm.LinearSVC(class_weight='auto')
+                model = estimator.fit(trainDataFrame[I], targets)
+                predictions = model.decision_function(testDataFrame[I])
+                score_tmp = roc_auc_score(true_values, predictions)
+
+                estimator = svm.LinearSVC(class_weight='auto', random_state=42)
+                model = estimator.fit(trainDataFrame[I], targets)
+                predictions = model.decision_function(testDataFrame[I])
+                scores[i] = roc_auc_score(true_values, predictions)
+                print '\t', i, '\t', s[i], '\t', scores[i], '\t\t',score_tmp
+
+            if False:
+                # Logistic regression of random forest
+                estimator = linear_model.LogisticRegression(C=1)
+                # estimator = RandomForestClassifier()
+                model = estimator.fit(trainDataFrame[I], targets)
+                probabilities = model.predict_proba(testDataFrame[I])
+                predictions = [p[1] for p in probabilities]
+                # predictions0 = [p[0] for p in probabilities]
+                # predictions1 = [p[1] for p in probabilities]
+                #
+                # print "\t\t", predictions0
+                # print "\t\t", predictions1
+                # print "\t\t", true_values
+
+                scores[i] = roc_auc_score(true_values, predictions)
+                # scores0[i] = roc_auc_score(true_values, predictions0)
+                # scores1[i] = roc_auc_score(true_values, predictions1)
+                # print '\t', probabilities
+                print '\t', i, '\t', s[i], '\t', scores[i]
+        # print s
+        # print scores
+        # print sorted(scores)
+        # print
         which = 0
         lowestScore = scores[0]
         for i in range(n):
@@ -1539,6 +1588,9 @@ def featureSelection(limitIDs=None, limit=None):
 def testPredictions(limit=None, limitIDs=None):
 
     features = getListOfAllFeatures()
+    features.remove('average_day_a')
+    # features = getListFeatures('only_qm')
+
     if limit is not None:
         features = features[:limit]
     if not os.path.exists('features_selection'):
@@ -1546,22 +1598,43 @@ def testPredictions(limit=None, limitIDs=None):
     if not os.path.exists('features_selection/cache'):
         os.makedirs('features_selection/cache')
 
-    train_ids = getTrainingSubsetIds('2013-03-01', '2013-03-02')
-    target_of_shopper = readTargets2()
-    test_ids = getTrainingSubsetIds('2013-04-07', '2013-04-08')
+    train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
+    test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
 
     if limitIDs is not None:
         train_ids = map(int, train_ids[:limitIDs])
         test_ids = map(int, test_ids[:limitIDs])
 
-    targets = [target_of_shopper[ID] for ID in train_ids]
     trainDataFrame = getDataFrame(train_ids, features)
     testDataFrame = getDataFrame(test_ids, features)
 
-    svc = svm.LinearSVC()
-    model = svc.fit(trainDataFrame.iloc[:, [1]], targets)
-    predictions = model.decision_function(testDataFrame.iloc[:, [1]])
-    return predictions
+    target_of_shopper = readTargets2()
+    targets = [target_of_shopper[ID] for ID in train_ids]
+    true_values = [int(target_of_shopper[ID]) for ID in test_ids]
+
+    if True:
+
+        estimator = svm.LinearSVC(class_weight='auto', random_state=42)
+        model = estimator.fit(trainDataFrame, targets)
+        predictions = model.decision_function(testDataFrame)
+
+    else:
+
+        estimator = linear_model.LogisticRegression(C=1)
+        # estimator = RandomForestClassifier()
+        model = estimator.fit(trainDataFrame, targets)
+        probabilities = model.predict_proba(testDataFrame)
+        predictions = [p[1] for p in probabilities]
+
+    # for i in range(len(true_values)):
+    #     print true_values[i], '\t',
+    #     print predictions[i]
+    # print
+    # print
+    # print
+    res = roc_auc_score(true_values, predictions)
+    print res
+    return res
 
 
 def testCrossValidation():
@@ -1651,10 +1724,10 @@ def main():
     # testSklearn()
 
     # Remove once featureSelection works.
-    # p = testPredictions(limitIDs=5, limit=2)
+    # p = testPredictions(limitIDs=None, limit=None)
+    # featureSelection(limitIDs=None, limit=None)
 
-    featureSelection(limitIDs=100, limit=50)
-
+    scaleFeatures()
 
 if __name__ == '__main__':
     main()
