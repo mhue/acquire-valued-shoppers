@@ -154,7 +154,7 @@ def getIds(phase):
     return ids
 
 
-def getTrainingSubsetIds(startDate='2013-03-01', endDate='2013-04-01'):
+def getTrainingSubsetIds(startDate, endDate): #startDate='2013-03-01', endDate='2013-04-01'
     """ Return a list of shoppers IDs with an offer in [startDate, endDate). """
     ids = []
     fid = open('trainHistory.csv')
@@ -801,6 +801,7 @@ def computeFeaturesSecondPass():
     read.
 
     """
+    print 'Calculating 2nd phase. Iterating over transactions. Phase ends at 350.'
 
     readOffers()
     readShoppers()
@@ -958,6 +959,11 @@ def computeFeaturesSecondPass():
 
 
 def computeFeaturesThirdPass():
+    """
+    Calculating 3rd phase. Iterating over History (Train + Test). Phase ends at 31.'
+    """
+    print computeFeaturesThirdPass.__doc__
+
     readOffers()
     readShoppers()
 
@@ -990,13 +996,19 @@ def computeFeaturesThirdPass():
     average_day_q_60 = dict(zip(ids, [0] * n))
     average_day_q_180 = dict(zip(ids, [0] * n))
     market_imp = dict(zip(ids, [0] * n))
+    chain_imp = dict(zip(ids, [0] * n))
+    
     
     target_of_shopper = readTargets()
+    
     market_total_returns = dict()
     market_sum = dict()
     
-    steps=0
+    chain_total_returns = dict()
+    chain_sum = dict()
     
+    steps=0
+
     for shopper in ids:
         N = 10000
         if steps % N == 0:
@@ -1011,25 +1023,48 @@ def computeFeaturesThirdPass():
         offer_day[shopper] = (dt+1) % 7 - 1 + 6
         offer_week[shopper] = (dt / 7) % 4
         
-        #impact coding for variable(s): market        
+        #impact coding:        
         if shopper not in ids_train:
             continue
+        
+        #market:
         market = market_of_shopper[shopper]
         if market in market_sum:
             market_sum[market] += 1
             market_total_returns[market] += target_of_shopper[shopper]
         else:
             market_sum[market] = 1
-            market_total_returns[market] = target_of_shopper[shopper]
-        
+            market_total_returns[market] = target_of_shopper[shopper]        
+
+        #chain:        
+        chain = chain_of_shopper[shopper]
+        if chain in chain_sum:
+            chain_sum[chain] += 1
+            chain_total_returns[chain] += target_of_shopper[shopper]
+        else:
+            chain_sum[chain] = 1
+            chain_total_returns[chain] = target_of_shopper[shopper]
+    
+    missing_chain_counter=0    
     for shopper in ids:
         market = market_of_shopper[shopper]
-        market_imp[shopper] = float(market_total_returns[market]/market_sum[market])
+        market_imp[shopper] = float(market_total_returns[market]) / market_sum[market]
+        chain = chain_of_shopper[shopper]
+        if chain in chain_sum:
+            chain_imp[shopper] = float(chain_total_returns[chain]) / chain_sum[chain]
+            last_chain=chain #to be used for chains that exist in the test set but not in the train set (last chain will be used instead)
+        else:
+            chain_imp[shopper] = float(chain_total_returns[last_chain]) / chain_sum[last_chain]
+            missing_chain_counter += 1
+    
+    print missing_chain_counter
+            
+        
     '''
     TBD:
-    do the same with chain, dept
+    do the same with dept
     '''
-
+        
     total_a = loadIt('total_a', valueType='float')
     total_a_30 = loadIt('total_a_30', valueType='float')
     total_a_60 = loadIt('total_a_60', valueType='float')
@@ -1144,6 +1179,7 @@ def computeFeaturesThirdPass():
     saveIt(average_day_q_60, 'average_day_q_60.txt')
     saveIt(average_day_q_180, 'average_day_q_180.txt')
     saveIt(market_imp, 'market_imp.txt')
+    saveIt(chain_imp, 'chain_imp.txt')
     
 
 def readTargets():
@@ -1518,7 +1554,7 @@ def main():
 # Uncomment to re-compute the features.
     #computeTransactionsSubset()
     #computeFeaturesFirstPass()
-    computeFeaturesSecondPass()    
+    #computeFeaturesSecondPass()    
     computeFeaturesThirdPass()
 
     getListOfAllFeatures()
