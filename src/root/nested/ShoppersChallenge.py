@@ -9,9 +9,13 @@ import csv
 import glob
 import subprocess
 import gzip
+import random
 
+import pandas as pd
 from sklearn.metrics import roc_auc_score
-import numpy
+from sklearn import svm, linear_model
+from sklearn.ensemble import RandomForestClassifier
+import numpy as np
 
 
 class Error(Exception):
@@ -146,6 +150,12 @@ def loadIt(feature, valueType=None, folder='features'):
     return d
 
 
+def loadIt2(feature, valueType=None, folder='features'):
+    df = pd.read_csv(folder + '/' + feature + '.txt', delimiter=' ',
+                     header=None, index_col=0)
+    return df.to_dict()[1]
+
+
 def getIds(phase):
     fid = open(phase + 'History.csv', 'r')
     cr = csv.reader(fid)
@@ -157,19 +167,9 @@ def getIds(phase):
 
 def getTrainingSubsetIds(startDate, endDate):
     """ Return a list of shoppers IDs with an offer in [startDate, endDate). """
-    ids = []
-    fid = open('trainHistory.csv')
-
-    cr = csv.reader(fid)
-    header = cr.next()
-    i = header.index('offerdate')
-    for row in cr:
-        ID = row[0]
-        date = row[i]
-        if startDate <= date < endDate:
-            ids.append(ID)
-    fid.close()
-    return ids
+    df = pd.read_csv('trainHistory.csv')
+    return list(df[(df['offerdate'] >= startDate) &
+                   (df['offerdate'] < endDate)]['id'].values)
 
 
 def computeTransactionsSubset():
@@ -1189,6 +1189,10 @@ def computeFeaturesThirdPass():
     
 
 def readTargets():
+    """
+    Returns a dictionary, with keys the string shopper IDs, and values a
+    boolean.
+    """
     target_of_shopper = {}
     fid = open('trainHistory.csv')
     cr = csv.reader(fid)
@@ -1204,6 +1208,40 @@ def readTargets():
     return target_of_shopper
 
 
+def readTargets2():
+    """
+    Returns a dictionary, with keys the shopper IDs, and values a
+    boolean.
+    """
+    return pd.read_csv('trainHistory.csv', index_col=0,
+                       usecols=['id', 'repeater'], true_values=['t'],
+                       false_values=['f']).to_dict()['repeater']
+
+
+def scaleFeatures():
+    """Scales each feature file."""
+    files = [f.split('/')[1] for f in glob.glob('features/*.txt')]
+    files.sort()
+    for f in files:
+        out = 'normalizedFeatures/' + f
+        if not os.path.exists(out):
+            print out
+            lines = open('features/' + f).readlines()
+            n = len(lines)
+            ids = [l.split()[0] for l in lines]
+            v = [float(l.split()[1]) for l in lines]
+            m = min(v)
+            M = max(v)
+            if m == M:
+                print f, 'constant feature.'
+                continue
+            nv = [str((val - m) / (M - m)) for val in v]
+            toWrite = [ids[i] + ' ' + nv[i] for i in range(n)]
+            fd = open(out, 'w')
+            fd.write('\n'.join(toWrite) + '\n')
+            fd.close()
+
+
 def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
     """
     Creates a file corresponding to ids and features. 
@@ -1215,12 +1253,13 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
         outFile: a string.
         
     The function creates intermediate files, one per feature, to fit in RAM.
+    They are stored in a folder with a name ending with '_temporary_files'.
     """
     target_of_shopper = readTargets()
     n = len(ids)
     nf = len(features)
 
-    # Normalize ~features only for liblinear.
+    # Normalize features only for liblinear.
     assert (libraryFormat == 'liblinear' and normalize) or \
         (libraryFormat != 'liblinear' and not normalize)
 
@@ -1248,7 +1287,8 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
 
         if normalize:
             toWrite = [
-                str((f[ID] - minValue) / (maxValue - minValue)) for ID in ids]
+                str((f[ID] - minValue) / (maxValue - minValue))
+                for ID in ids]
         else:
             toWrite = [str(f[ID]) for ID in ids]
         out = open('%s/%s.txt' % (tmp_dir, features[i]), 'w')
@@ -1500,13 +1540,150 @@ def runExperiment(experimentName, ids_train, ids_test, features, library,
         return computeAUCScores(predictionsFile)
 
 
+def runSklearnExperiments(experimentName, train_ids, test_ids, features,
+                          predictionScores=False):
+    """
+        Runs a series of experiments using scikit-learn.
+
+        experimentName: a string, the subfolder of 'experiments' containing
+            the necessary files for each step.
+        ids_train: list of ids, contained in the ids in trainHistory.csv
+        ids_test: list of ids for which we want a prediction.
+        features: a list of strings.
+        predictionScores: boolean.  If True, return a list of float.
+    """
+
+    nTrain = len(train_ids)
+    nTest = len(test_ids)
+    nFeatures = len(features)
+    X = [[0] * nFeatures for i in range(nTrain)]
+    XTest = [[0] * nFeatures for i in range(nTest)]
+    for j in range(nFeatures):
+        d = loadIt(features[j])
+        for i in range(nTrain):
+            X[i][j] = float(d[train_ids[i]])
+        for i in range(nTest):
+            XTest[i][j] = float(d[test_ids[i]])
+
+    target_of_shopper = readTargets2()
+    y = [0] * nTrain
+    for i in range(nTrain):
+        y[i] = float(target_of_shopper[train_ids[i]])
+
+    import sklearn.svm
+    svc = sklearn.svm.LinearSVC()
+    yPredicted = svc.fit(X, y).predict(XTest)
+    return 0
+
+
+def getDataFrame(ids, features, scaled=False):
+
+    data_dict = {}
+    print >>sys.stderr, 'reading',
+    for f in features:
+        print >>sys.stderr, f,
+        if scaled:
+            feature_dict = loadIt2(f, folder='normalizedFeatures')
+        else:
+            feature_dict = loadIt2(f)
+        v = [feature_dict[ID] for ID in ids]
+        data_dict[f] = v
+    print >>sys.stderr
+    res = pd.DataFrame(data_dict)
+    return res
+
+
+def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
+                     random_state=None, onePass=False):
+    """
+    Find a list of features with a high score.
+
+    Start with all available features, eliminate one feature at a time.
+    The eliminated feature is the
+    """
+    features = getListOfAllFeatures()
+    if not os.path.exists('features_selection'):
+        os.makedirs('features_selection')
+    if not os.path.exists('features_selection/cache'):
+        os.makedirs('features_selection/cache')
+
+    train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
+    test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
+    target_of_shopper = readTargets2()
+
+    if limitIDs is not None:
+        n = len(train_ids)
+        if limitIDs < n:
+            I = range(n)
+            random.seed(random_state)
+            random.shuffle(I)
+            train_ids = [train_ids[i] for i in I[:limitIDs]]
+
+    print 'Backward selection with %s' % estimatorToUse,
+    print 'OnePass=', onePass
+
+    scaled = estimatorToUse in ['LinearSVC', 'LogisticRegression']
+    trainDataFrame = getDataFrame(train_ids, features, scaled=scaled)
+    testDataFrame = getDataFrame(test_ids, features, scaled=scaled)
+    targets = [int(target_of_shopper[ID]) for ID in train_ids]
+    true_values = [int(target_of_shopper[ID]) for ID in test_ids]
+    s = features
+
+    res = []
+    while True:
+        n = len(s)
+        if n == 1:
+            res.insert(0, (s[0], None))
+            break
+        scores = [0] * n
+        for i in range(n):
+
+            I = s[:i] + s[i+1:]
+            if estimatorToUse == 'LinearSVC':
+
+                estimator = svm.LinearSVC(class_weight='auto', random_state=42)
+                model = estimator.fit(trainDataFrame[I], targets)
+                predictions = model.decision_function(testDataFrame[I])
+                scores[i] = roc_auc_score(true_values, predictions)
+
+            if estimatorToUse == 'LogisticRegression':
+
+                estimator = \
+                    linear_model.LogisticRegression(C=1, class_weight='auto',
+                                                    random_state=42)
+                model = estimator.fit(trainDataFrame[I], targets)
+                probabilities = model.predict_proba(testDataFrame[I])
+                predictions = [p[1] for p in probabilities]
+                scores[i] = roc_auc_score(true_values, predictions)
+
+            if estimatorToUse == 'RandomForestClassifier':
+                estimator = RandomForestClassifier(random_state=42)
+                model = estimator.fit(trainDataFrame[I], targets)
+                probabilities = model.predict_proba(testDataFrame[I])
+                predictions = [p[1] for p in probabilities]
+                scores[i] = roc_auc_score(true_values, predictions)
+        which = 0
+        highestScore = scores[0]
+        for i in range(n):
+            if scores[i] >= highestScore:
+                which = i
+                highestScore = scores[i]
+        print '%.12f without %s' % (scores[which], s[which])
+        res.insert(0, (s[which], scores[which]))
+        s = s[:which] + s[which+1:]
+        # if onePass:
+        #     return res
+        #     break
+    return res
+
+
 def testCrossValidation():
     train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
     test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
     allFeatures = getListOfAllFeatures()
 
     scores = []
-    if True:
+    if False:
         # Testing with liblinear.
         for nf in [1, 3, 10, 40, 117]:
             experimentName = 'lib-%d' % nf
@@ -1535,6 +1712,17 @@ def testCrossValidation():
             print score
             scores.append(score)
 
+    if False:
+        # Testing with scikit-learn.
+        for nf in [1, 3]:
+            experimentName = 'sklearn-%d' % nf
+            features = allFeatures[:nf]
+            score = runSklearnExperiments(
+                experimentName, train_ids, test_ids, features,
+                predictionScores=True)
+            print score
+            scores.append(score)
+
     if True:
         # Using feature sets.
         getListOfAllFeatures()
@@ -1555,17 +1743,33 @@ def testCrossValidation():
             print '%s: %f' % (k, scoresDictionary[k])
 
 
+def testFeatureSelection(random_state=None, onePass=None):
+
+    res = featureSelection(limitIDs=1000, estimatorToUse='LinearSVC',
+                           random_state=random_state,
+                           onePass=True)
+    print res
+    res = featureSelection(limitIDs=1000, estimatorToUse='LogisticRegression',
+                           random_state=random_state,
+                           onePass=True)
+    print res
+    res = featureSelection(limitIDs=1000,
+                           estimatorToUse='RandomForestClassifier',
+                           random_state=random_state,
+                           onePass=True)
+    print res
+
+
 def main():
 
-# Uncomment to re-compute the features.
-    #computeTransactionsSubset()
-    #computeFeaturesFirstPass()
-    #computeFeaturesSecondPass()    
-    computeFeaturesThirdPass()
+    # Uncomment to re-compute the features.
+    # computeTransactionsSubset()
+    # computeFeaturesFirstPass()
+    # computeFeaturesSecondPass()
+    # computeFeaturesThirdPass()
 
-    getListOfAllFeatures()
-    
-#    testCrossValidation()
+    # testCrossValidation()
+    testFeatureSelection(random_state=42, onePass=True)
 
 
 if __name__ == '__main__':
