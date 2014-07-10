@@ -81,7 +81,7 @@ def readShoppers():
         marketIndex = header.index('market') 
         chainIndex = header.index('chain')
         for row in cr:
-            ID = row[IDIndex]
+            ID = int(row[IDIndex])
             offer = row[offerIndex]
             date = row[dateIndex]
             market = row[marketIndex] 
@@ -382,7 +382,7 @@ def computeFeaturesFirstPass(folder='features'):
     steps = 0
     for row in transactions:
 
-        ID = row[IDIndex]
+        ID = int(row[IDIndex])
         category = row[categoryIndex]
         company = row[companyIndex]
         brand = row[brandIndex]
@@ -398,6 +398,7 @@ def computeFeaturesFirstPass(folder='features'):
             company_n[ID] += 1
             company_a[ID] += amount
             company_q[ID] += quantity
+
             if measure == '':
                 company_qm_[ID] += quantity
             if measure == '1':
@@ -855,7 +856,7 @@ def computeFeaturesSecondPass():
     steps = 0
     for row in transactions:
 
-        ID = row[IDIndex]
+        ID = int(row[IDIndex])
         date = row[dateIndex]
         measure = row[measureIndex]
         quantity = float(row[quantityIndex])
@@ -1196,7 +1197,7 @@ def readTargets():
     IDIndex = header.index('id')
     repeatIndex = header.index('repeater')
     for row in cr:
-        ID = row[IDIndex]
+        ID = int(row[IDIndex])
         repeat = row[repeatIndex]
         target = int(repeat == 't')
         target_of_shopper[ID] = target
