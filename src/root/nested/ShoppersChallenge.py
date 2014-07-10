@@ -1187,26 +1187,6 @@ def computeFeaturesThirdPass():
 
 def readTargets():
     """
-    Returns a dictionary, with keys the string shopper IDs, and values a
-    boolean.
-    """
-    target_of_shopper = {}
-    fid = open('trainHistory.csv')
-    cr = csv.reader(fid)
-    header = cr.next()
-    IDIndex = header.index('id')
-    repeatIndex = header.index('repeater')
-    for row in cr:
-        ID = int(row[IDIndex])
-        repeat = row[repeatIndex]
-        target = int(repeat == 't')
-        target_of_shopper[ID] = target
-    fid.close()
-    return target_of_shopper
-
-
-def readTargets2():
-    """
     Returns a dictionary, with keys the shopper IDs, and values a
     boolean.
     """
@@ -1562,7 +1542,7 @@ def runSklearnExperiments(experimentName, train_ids, test_ids, features,
         for i in range(nTest):
             XTest[i][j] = float(d[test_ids[i]])
 
-    target_of_shopper = readTargets2()
+    target_of_shopper = readTargets()
     y = [0] * nTrain
     for i in range(nTrain):
         y[i] = float(target_of_shopper[train_ids[i]])
@@ -1606,7 +1586,7 @@ def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
 
     train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
     test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
-    target_of_shopper = readTargets2()
+    target_of_shopper = readTargets()
 
     if limitIDs is not None:
         n = len(train_ids)
