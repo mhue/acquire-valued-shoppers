@@ -150,19 +150,15 @@ def loadIt(feature, valueType=None, folder='features'):
     return d
 
 
-def loadIt2(feature, valueType=None, folder='features'):
+def loadIt2(feature, folder='features'):
     df = pd.read_csv(folder + '/' + feature + '.txt', delimiter=' ',
                      header=None, index_col=0)
     return df.to_dict()[1]
 
 
 def getIds(phase):
-    fid = open(phase + 'History.csv', 'r')
-    cr = csv.reader(fid)
-    cr.next()
-    ids = [row[0] for row in cr]
-    fid.close()
-    return ids
+    df = pd.read_csv('%sHistory.csv' % phase)
+    return list(df['id'].values)
 
 
 def getTrainingSubsetIds(startDate, endDate):
@@ -649,7 +645,7 @@ def computeFeaturesFirstPass(folder='features'):
             if dt <= 180:
                 company_category_brand_180[ID] += 1
             if 365-14 <= dt <= 365+14:
-                company_category_brand_last_year = 1
+                company_category_brand_last_year[ID] = 1
 
         N = 1000000
         if steps % N == 0:
@@ -1594,7 +1590,7 @@ def getDataFrame(ids, features, scaled=False):
 
 
 def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
-                     random_state=None, onePass=False):
+                     random_state=None):
     """
     Find a list of features with a high score.
 
@@ -1620,7 +1616,6 @@ def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
             train_ids = [train_ids[i] for i in I[:limitIDs]]
 
     print 'Backward selection with %s' % estimatorToUse,
-    print 'OnePass=', onePass
 
     scaled = estimatorToUse in ['LinearSVC', 'LogisticRegression']
     trainDataFrame = getDataFrame(train_ids, features, scaled=scaled)
@@ -1671,9 +1666,6 @@ def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
         print '%.12f without %s' % (scores[which], s[which])
         res.insert(0, (s[which], scores[which]))
         s = s[:which] + s[which+1:]
-        # if onePass:
-        #     return res
-        #     break
     return res
 
 
@@ -1743,20 +1735,17 @@ def testCrossValidation():
             print '%s: %f' % (k, scoresDictionary[k])
 
 
-def testFeatureSelection(random_state=None, onePass=None):
+def testFeatureSelection(random_state=None):
 
     res = featureSelection(limitIDs=1000, estimatorToUse='LinearSVC',
-                           random_state=random_state,
-                           onePass=True)
+                           random_state=random_state)
     print res
     res = featureSelection(limitIDs=1000, estimatorToUse='LogisticRegression',
-                           random_state=random_state,
-                           onePass=True)
+                           random_state=random_state)
     print res
     res = featureSelection(limitIDs=1000,
                            estimatorToUse='RandomForestClassifier',
-                           random_state=random_state,
-                           onePass=True)
+                           random_state=random_state)
     print res
 
 
@@ -1769,7 +1758,7 @@ def main():
     # computeFeaturesThirdPass()
 
     # testCrossValidation()
-    testFeatureSelection(random_state=42, onePass=True)
+    testFeatureSelection(random_state=42)
 
 
 if __name__ == '__main__':
