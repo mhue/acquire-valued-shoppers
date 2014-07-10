@@ -130,7 +130,7 @@ def time_between_dates(date_1, date_2):
 def saveIt(d, outfile):
     fileid = open('features/' + outfile, 'w')
     for key in d:
-        fileid.write(key + ' ' + str(d[key]) + '\n')
+        fileid.write(str(key) + ' ' + str(d[key]) + '\n')
     fileid.close()
 
 
