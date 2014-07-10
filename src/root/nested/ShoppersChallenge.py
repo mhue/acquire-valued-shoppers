@@ -1728,7 +1728,7 @@ def testCrossValidation():
 
 def testFeatureSelection(random_state=None):
 
-    res = featureSelection(limitIDs=10, estimatorToUse='LinearSVC',
+    res = featureSelection(limitIDs=1000, estimatorToUse='LinearSVC',
                            random_state=random_state)
     res = featureSelection(limitIDs=1000, estimatorToUse='LogisticRegression',
                            random_state=random_state)
