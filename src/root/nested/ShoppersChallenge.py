@@ -10,6 +10,7 @@ import glob
 import subprocess
 import gzip
 import random
+import time
 
 import pandas as pd
 from sklearn.metrics import roc_auc_score
@@ -1570,7 +1571,7 @@ def getDataFrame(ids, features, scaled=False):
     return res
 
 
-def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
+def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression', C=1,
                      random_state=None):
     """
     Find a list of features with a high score.
@@ -1609,7 +1610,6 @@ def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
     while True:
         n = len(s)
         if n == 1:
-            res.insert(0, (s[0], None))
             break
         scores = [0] * n
         for i in range(n):
@@ -1617,7 +1617,7 @@ def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
             I = s[:i] + s[i+1:]
             if estimatorToUse == 'LinearSVC':
 
-                estimator = svm.LinearSVC(class_weight='auto', random_state=42)
+                estimator = svm.LinearSVC(C=C, class_weight='auto', random_state=42)
                 model = estimator.fit(trainDataFrame[I], targets)
                 predictions = model.decision_function(testDataFrame[I])
                 scores[i] = roc_auc_score(true_values, predictions)
@@ -1625,7 +1625,7 @@ def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
             if estimatorToUse == 'LogisticRegression':
 
                 estimator = \
-                    linear_model.LogisticRegression(C=1, class_weight='auto',
+                    linear_model.LogisticRegression(C=C, class_weight='auto',
                                                     random_state=42)
                 model = estimator.fit(trainDataFrame[I], targets)
                 probabilities = model.predict_proba(testDataFrame[I])
@@ -1645,8 +1645,18 @@ def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression',
                 which = i
                 highestScore = scores[i]
         print '%.12f without %s' % (scores[which], s[which])
-        res.insert(0, (s[which], scores[which]))
         s = s[:which] + s[which+1:]
+        res.append((scores[which], len(s), s))
+    res.sort()
+
+    # store the top 10 feature sets.
+    for i in range(10):
+        s = res[i][2]
+        out = 'features_sets/f-%s-%f-%d-%s.txt' % \
+              (estimatorToUse, C, i, time.strftime('%Y-%m-%d-%H-%M-%S'))
+        fd = open(out, 'w')
+        fd.write('\n'.join(s) + '\n')
+        fd.close()
     return res
 
 
@@ -1718,16 +1728,15 @@ def testCrossValidation():
 
 def testFeatureSelection(random_state=None):
 
-    res = featureSelection(limitIDs=1000, estimatorToUse='LinearSVC',
+    res = featureSelection(limitIDs=10, estimatorToUse='LinearSVC',
                            random_state=random_state)
-    print res
     res = featureSelection(limitIDs=1000, estimatorToUse='LogisticRegression',
                            random_state=random_state)
-    print res
-    res = featureSelection(limitIDs=1000,
-                           estimatorToUse='RandomForestClassifier',
-                           random_state=random_state)
-    print res
+
+    # Backward selection on a RandomForestClassifier brings not insight.
+    # res = featureSelection(limitIDs=1000,
+    #                        estimatorToUse='RandomForestClassifier',
+    #                        random_state=random_state)
 
 
 def main():
@@ -1739,8 +1748,9 @@ def main():
     # computeFeaturesThirdPass()
 
     # testCrossValidation()
+    # getListOfAllFeatures(force=True)
+    # scaleFeatures()
     testFeatureSelection(random_state=42)
-
 
 if __name__ == '__main__':
     main()
