@@ -1647,7 +1647,7 @@ def featureSelection(limitIDs=None, estimatorToUse='LogisticRegression', C=1,
         print '%.12f without %s' % (scores[which], s[which])
         s = s[:which] + s[which+1:]
         res.append((scores[which], len(s), s))
-    res.sort()
+    res.sort(reverse=True)
 
     # store the top 10 feature sets.
     for i in range(10):
