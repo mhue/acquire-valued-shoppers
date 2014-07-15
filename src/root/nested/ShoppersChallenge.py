@@ -135,23 +135,7 @@ def saveIt(d, outfile):
     fileid.close()
 
 
-def loadIt(feature, valueType=None, folder='features'):
-    fileid = open(folder + '/' + feature + '.txt')
-    d = {}
-    for row in fileid:
-        words = row.split()
-        key = words[0]
-        if valueType == 'int':
-            value = int(words[1])
-        elif valueType == 'float':
-            value = float(words[1])
-        else:
-            value = words[1]
-        d[key] = value
-    return d
-
-
-def loadIt2(feature, folder='features'):
+def loadIt(feature, folder='features'):
     df = pd.read_csv(folder + '/' + feature + '.txt', delimiter=' ',
                      header=None, index_col=0)
     return df.to_dict()[1]
@@ -1248,7 +1232,7 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
     for i in range(nf):
 
         print i, 'reading', features[i]
-        f = loadIt(features[i], valueType='float')
+        f = loadIt(features[i])
 
         # Check whether the feature is constant.
         value = f.itervalues().next()
@@ -1281,7 +1265,7 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
 
     lines = []
     for i in range(n):
-        target = target_of_shopper.get(ids[i], 0)
+        target = int(target_of_shopper.get(ids[i], 0))
         if libraryFormat == 'liblinear':
             words = [str(target)]
         if libraryFormat == 'vw':
@@ -1289,6 +1273,8 @@ def createFeatureFiles(ids, features, libraryFormat, outFile, normalize=False):
         for j in range(nf):
             value = fileIDs[features[j]].readline().strip()
             if value == '0':
+                # HACK
+                words.append('%d:%s' % (j + 1, value))
                 continue
             else:
                 words.append('%d:%s' % (j + 1, value))
@@ -1316,7 +1302,7 @@ def parseLiblinearResults(ids, resultsFile, predictionsFile):
     header = 'id,repeatProbability'
     t = [header]
     for i in range(n):
-        t.append(ids[i] + ',' + lines[i].split()[1])
+        t.append(str(ids[i]) + ',' + lines[i].split()[1])
     fid = gzip.GzipFile(predictionsFile, 'wb')
     fid.write('\n'.join(t) + '\n')
     fid.close()
@@ -1372,7 +1358,7 @@ def computePredictions(library, parameters, trainFile, testFile,
         parseLiblinearResults(test_ids, resultsFile, predictionsFile)
 
     if library == 'vw':
-        c = ['vw', trainFile, '-f', modelFile]
+        c = ['vw', trainFile, '-f', modelFile]+ parameters['train']
         c2 = ['vw', '-i', modelFile,
               '-t', testFile, '-p', resultsFile] + parameters['predict']
         subprocess.call(c)
@@ -1463,17 +1449,33 @@ def computeAUCScores(predictionsFile):
     process_results = csv.reader(process_results_file)
     process_results.next()  # Skip the header.
     for row in process_results:
-        value = targets[row[0]]
+        value = targets[int(row[0])]
         true_values.append(int(value))
         probabilities.append(float(row[1]))
-    true_values_array = numpy.asarray(true_values)
-    probabilities_array = numpy.asarray(probabilities)
+    true_values_array = np.asarray(true_values)
+    probabilities_array = np.asarray(probabilities)
 
     return roc_auc_score(true_values_array, probabilities_array)
 
 
-def runExperiment(experimentName, ids_train, ids_test, features, library,
-                  parameters, createTrainTest=None, predictionScores=False):
+def runExperiment(experimentName, features, library, parameters):
+
+    # Prepare predictions.
+    train_ids = getIds('train')
+    test_ids = getIds('test')
+    runTask(experimentName, train_ids, test_ids, features, library,
+            parameters[0], createTrainTest=None, predictionScores=False)
+
+    # Simulate the score.
+    train_ids = getTrainingSubsetIds('2013-03-01', '2013-04-07')
+    test_ids = getTrainingSubsetIds('2013-04-07', '2013-05-01')
+    score = runTask(experimentName, train_ids, test_ids, features, library,
+                    parameters[1], createTrainTest=None, predictionScores=True)
+    return score, experimentName, library, str(parameters)
+
+
+def runTask(experimentName, ids_train, ids_test, features, library,
+            parameters, createTrainTest=None, predictionScores=False):
     """Training, computing predictions, and evaluating or preparing to submit.
     
     Args:
@@ -1494,7 +1496,7 @@ def runExperiment(experimentName, ids_train, ids_test, features, library,
             in trainHistory.csv.  If it's False, returns None
         returns list of float, or None
     """
-    folder = 'experiments/' + experimentName
+    folder = 'experiments/%s-%d' % (experimentName, predictionScores)
     if not os.path.exists(folder):
         os.makedirs(folder)
     trainFile = folder + '/train.txt'
@@ -1726,14 +1728,76 @@ def testCrossValidation():
             print '%s: %f' % (k, scoresDictionary[k])
 
 
+def runAll():
+
+    # features_sets = getAllFeaturesSets()
+    # libraries = ['liblinear', 'vw', 'sklearn-RandomForestClassifier',
+    #              'sklearn-LinearSVC', 'sklearn-GBTree']
+
+    features_sets = getAllFeaturesSets()
+
+    libraries = ['liblinear', 'vw']
+    parameters_for_library = {
+        'liblinear': [[{'train': ['c', '0.1', '-s', '0', '-w0', '43438', '-w1', '116619',
+                                  '-B', '1'],
+                        'predict': ['-b', '1']},
+                      {'train': ['c', '0.1', '-s', '0', '-w0', '21326', '-w1', '73234',
+                                 '-B', '1'],
+                       'predict': ['-b', '1']}],
+                      [{'train': ['c', '0.5', '-s', '0', '-w0', '43438', '-w1', '116619',
+                                  '-B', '1'],
+                        'predict': ['-b', '1']},
+                      {'train': ['c', '0.5', '-s', '0', '-w0', '21326', '-w1', '73234',
+                                 '-B', '1'],
+                       'predict': ['-b', '1']}],
+                      [{'train': ['c', '4', '-s', '0', '-w0', '43438', '-w1', '116619',
+                                  '-B', '1'],
+                        'predict': ['-b', '1']},
+                      {'train': ['c', '4', '-s', '0', '-w0', '21326', '-w1', '73234',
+                                 '-B', '1'],
+                       'predict': ['-b', '1']}]],
+
+        'vw': [[{'train': [], 'predict': ['--loss_function', 'quantile']},
+                {'train': [], 'predict': ['--loss_function', 'quantile']}],
+               [{'train': ['--quantile_tau', '0.5', '-l', '0.85',
+                           '--loss_function', 'quantile',
+                           '--cache_file', 'cache.txt', '--passes', '40'],
+                 'predict': ['--loss_function', 'quantile']},
+                {'train': ['--quantile_tau', '0.5', '-l', '0.85',
+                           '--loss_function', 'quantile',
+                           '--cache_file', 'cache.txt', '--passes', '40'],
+                 'predict': ['--loss_function', 'quantile']}]]
+
+        # 'sklearn-RandomForestClassifier': [{'train': [], 'predict': []}],
+        # 'sklearn-LinearSVC': [{'train': [], 'predict': []}],
+        # 'sklearn-GBTree': [{'train': [], 'predict': []}],
+    }
+
+    results = []
+    for features_set in features_sets:
+        features = getListFeatures(features_set)
+        print len(features), 'features.'
+        for library in libraries:
+            for parameters in parameters_for_library[library]:
+                experimentName = '%s-%s-%s' % \
+                                 (features_set, library,
+                                  time.strftime('%Y-%m-%d-%H-%M-%S'))
+                results.append(runExperiment(experimentName, features, library,
+                                         parameters))
+
+    results.sort()
+    for result in results:
+        print result
+
+
 def testFeatureSelection(random_state=None):
 
-    res = featureSelection(limitIDs=1000, estimatorToUse='LinearSVC',
-                           random_state=random_state)
-    res = featureSelection(limitIDs=1000, estimatorToUse='LogisticRegression',
-                           random_state=random_state)
+    featureSelection(limitIDs=1000, estimatorToUse='LinearSVC',
+                     random_state=random_state)
+    featureSelection(limitIDs=1000, estimatorToUse='LogisticRegression',
+                     random_state=random_state)
 
-    # Backward selection on a RandomForestClassifier brings not insight.
+    # Backward selection on a RandomForestClassifier brings no insight.
     # res = featureSelection(limitIDs=1000,
     #                        estimatorToUse='RandomForestClassifier',
     #                        random_state=random_state)
@@ -1750,7 +1814,9 @@ def main():
     # testCrossValidation()
     # getListOfAllFeatures(force=True)
     # scaleFeatures()
-    testFeatureSelection(random_state=42)
+    # testFeatureSelection(random_state=42)
+
+    runAll()
 
 if __name__ == '__main__':
     main()
